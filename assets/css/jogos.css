@@ -1,0 +1,91 @@
+.game-shell { padding: 30px 0 60px; }
+.game-layout { max-width: 1200px; }
+.team-setup { padding: 24px; margin-bottom: 22px; display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 22px; align-items: center; }
+.setup-copy h1 { margin: 10px 0 4px; font-size: 1.7rem; }
+.setup-copy p { margin: 0; color: #667085; }
+.setup-players { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.setup-team { grid-column: span 2; padding: 12px; border-radius: 14px; background: #f4f7fc; }
+.setup-team strong, .setup-team span { display: block; }
+.setup-team span { margin-top: 5px; color: #667085; font-size: .82rem; line-height: 1.5; }
+.setup-team-blue { border-left: 4px solid #3678e8; }
+.setup-team-red { border-left: 4px solid #e24b45; }
+.setup-team { grid-column: span 2; padding: 12px; border-radius: 14px; background: #f4f7fc; }
+.setup-team strong, .setup-team span { display: block; }
+.setup-team span { margin-top: 5px; color: #667085; font-size: .82rem; line-height: 1.5; }
+.setup-team-blue { border-left: 4px solid #3678e8; }
+.setup-team-red { border-left: 4px solid #e24b45; }
+.setup-player { border: 1px solid #d8e0f3; border-radius: 12px; background: #fff; color: #263657; padding: 10px 6px; font-weight: 700; cursor: pointer; }
+.setup-player.selected { border-color: #3678e8; background: #eef5ff; color: #215bb8; }
+.setup-actions { display: flex; flex-direction: column; gap: 8px; }
+.setup-actions .btn { white-space: nowrap; }
+.turn-indicator { margin: 4px auto 12px; width: fit-content; max-width: 100%; padding: 8px 14px; border-radius: 999px; background: #fff7dc; color: #745400; font-size: .85rem; font-weight: 700; text-align: center; }
+.game-header {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding: 18px 20px; margin-bottom: 22px;
+}
+.hud-item {
+    background: rgba(240,246,255,0.8); border-radius: 16px; padding: 10px 14px; text-align: center;
+}
+.hud-item span { display: block; font-size: 0.72rem; color: #6d7da8; text-transform: uppercase; }
+.hud-item strong { font-size: 1.3rem; }
+.game-area { padding: 22px; }
+.question-box { text-align: center; margin-bottom: 24px; }
+.question-box h2 { font-size: clamp(1.5rem, 2vw, 2.5rem); }
+.feedback-box {
+    display: inline-block; margin-bottom: 14px; border-radius: 999px; padding: 8px 16px; font-weight: 800; letter-spacing: 0.08em; background: #daf7ed; color: #147a5d; opacity: 1;
+}
+.feedback-box.hidden { display: none; }
+.feedback-box.success { background: #daf7ed; color: #147a5d; }
+.feedback-box.error { background: #ffe3e6; color: #c63d4f; }
+.quadra { display: grid; grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr); gap: 18px; align-items: stretch; padding: 20px 0 4px; }
+.time-panel { border-radius: 24px; padding: 18px; border: 1px solid; }
+.time-azul { background: #eef5ff; border-color: #c8dcff; }
+.time-vermelho { background: #fff1f0; border-color: #ffd0cb; }
+.time-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.time-heading strong, .time-heading small { display: block; }
+.time-heading small { color: #667085; font-size: 0.75rem; margin-top: 2px; }
+.team-dot { width: 12px; height: 12px; border-radius: 50%; background: #3678e8; box-shadow: 0 0 0 5px rgba(54,120,232,.14); }
+.time-vermelho .team-dot { background: #e24b45; box-shadow: 0 0 0 5px rgba(226,75,69,.14); }
+.jogadores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.personagem { min-width: 0; border: 1px solid rgba(41, 54, 89, .12); border-radius: 18px; padding: 14px 8px; text-align: center; cursor: pointer; color: #1f2a44; background: rgba(255,255,255,.86); transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
+.personagem:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 14px 24px rgba(45, 64, 112, .16); }
+.personagem .avatar { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 8px; font-size: 1.7rem; color: #fff; background: #3678e8; }
+.time-vermelho .personagem .avatar { background: #e24b45; }
+.nome-jogador { display: block; font-size: .86rem; }
+.resposta { display: block; overflow: hidden; margin-top: 4px; font-size: .82rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.personagem.acertou { border-color: #28a879; box-shadow: 0 0 0 3px rgba(40,168,121,.18); }
+.personagem.acertou .avatar { background: #28a879; }
+.personagem.eliminado { opacity: .35; filter: grayscale(1); cursor: not-allowed; transform: scale(.96); }
+.quadra-divider { display: flex; align-items: center; justify-content: center; color: #a54a43; font-size: .78rem; font-weight: 900; }
+.quadra-divider span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #fff; border: 2px solid #f2b5ae; box-shadow: 0 8px 18px rgba(100, 52, 52, .12); }
+.personagem.aguardando { opacity: .48; cursor: not-allowed; }
+.personagem.vez { border-color: #e5a400; box-shadow: 0 0 0 4px rgba(229,164,0,.18), 0 12px 22px rgba(90,70,20,.12); transform: translateY(-3px); }
+.game-over {
+    max-width: 640px; margin: 20px auto 0; background: white; border-radius: 26px; padding: 28px; box-shadow: 0 24px 48px rgba(20,30,53,0.08); text-align: center;
+}
+.game-over.hidden { display: none; }
+.memory-shell { padding: 30px 0 60px; }
+.memory-header {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; padding: 18px 20px; margin-bottom: 22px;
+}
+.memory-board {
+    display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); gap: 16px; background: rgba(255,255,255,0.8); padding: 18px; border-radius: 26px; box-shadow: 0 18px 46px rgba(59,76,150,0.08);
+}
+.memory-card {
+    position: relative; height: 120px; border: none; border-radius: 18px; background: linear-gradient(135deg, #4f6ef7, #7c5cff); color: white; cursor: pointer; font-weight: 700; font-size: 1.2rem; perspective: 800px; transition: transform 0.25s ease;
+}
+.memory-card .card-front, .memory-card .card-back {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; border-radius: 18px; padding: 14px;
+}
+.memory-card .card-front { background: linear-gradient(135deg, #4f6ef7, #7c5cff); }
+.memory-card .card-back { background: linear-gradient(135deg, #dff7ee, #edf5ff); color: #1b2847; transform: rotateY(180deg); }
+.memory-card.revealed .card-front { transform: rotateY(180deg); }
+.memory-card.revealed .card-back { transform: rotateY(0deg); }
+.memory-card.matched { box-shadow: 0 0 0 3px rgba(76,201,167,0.3); }
+@media (max-width: 768px) {
+    .team-setup { grid-template-columns: 1fr; }
+    .setup-actions { flex-direction: row; flex-wrap: wrap; }
+    .game-header, .memory-header { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .quadra { grid-template-columns: 1fr; }
+    .quadra-divider { padding: 2px 0; }
+    .memory-board { grid-template-columns: repeat(2, minmax(90px, 1fr)); }
+}
