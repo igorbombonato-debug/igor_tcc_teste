@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS partidas;
 DROP TABLE IF EXISTS questoes;
 DROP TABLE IF EXISTS materias;
 DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS configuracoes;
 
 CREATE TABLE usuarios (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -23,7 +24,8 @@ CREATE TABLE usuarios (
     pontos INT NOT NULL DEFAULT 0,
     avatar VARCHAR(255) DEFAULT NULL,
     ativo TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_materias_ano_nome (ano_escolar, nome)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE materias (
@@ -114,7 +116,7 @@ CREATE TABLE usuario_conquistas (
     CONSTRAINT fk_usuario_conquistas_conquista FOREIGN KEY (conquista_id) REFERENCES conquistas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
+INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Números naturais', 'Estudo dos números inteiros positivos e suas propriedades.', 6, 'bi-123', 1),
 ('Números inteiros', 'Trabalho com números positivos e negativos.', 6, 'bi-plus-slash-minus', 1),
 ('Operações básicas', 'Adição, subtração, multiplicação e divisão.', 6, 'bi-calculator', 1),
@@ -169,7 +171,7 @@ INSERT INTO conquistas (nome, descricao, icone) VALUES
 ('90% de aproveitamento', 'Obteve 90% de aproveitamento em uma partida.', '🎯'),
 ('10 partidas concluídas', 'Concluiu 10 partidas no total.', '🏅');
 
-INSERT INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
+INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Números inteiros', 'Conjunto dos inteiros e suas operações.', 7, 'bi-plus-slash-minus', 1),
 ('Números racionais', 'Frações e decimais em um mesmo conjunto.', 7, 'bi-1-circle', 1),
 ('Frações', 'Representação e cálculo de frações.', 7, 'bi-pie-chart', 1),
@@ -223,7 +225,7 @@ INSERT INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 
 CREATE TABLE IF NOT EXISTS perguntas_geradas ( id INT PRIMARY KEY AUTO_INCREMENT, materia_id INT, ano_escolar TINYINT, dificuldade VARCHAR(20), enunciado TEXT, alternativa_a VARCHAR(255), alternativa_b VARCHAR(255), alternativa_c VARCHAR(255), alternativa_d VARCHAR(255), resposta_correta CHAR(1), explicacao TEXT );
 
-INSERT INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
+INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Números naturais', 'Estudo dos números inteiros positivos e suas propriedades.', 6, 'bi-123', 1),
 ('Números inteiros', 'Trabalho com números positivos e negativos.', 6, 'bi-plus-slash-minus', 1),
 ('Operações básicas', 'Adição, subtração, multiplicação e divisão.', 6, 'bi-calculator', 1),

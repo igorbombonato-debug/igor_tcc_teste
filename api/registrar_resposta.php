@@ -14,13 +14,16 @@ if (!is_array($data)) {
     $data = [];
 }
 
+$partida = isset($data['partida']) && is_array($data['partida']) ? $data['partida'] : [];
+
 $usuarioId = isset($data['usuario_id']) ? (int) $data['usuario_id'] : (int) ($_SESSION['user_id'] ?? 0);
 if ($usuarioId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Usuário não autenticado.']);
     exit;
 }
 
-$materiaId = isset($data['materia_id']) ? (int) $data['materia_id'] : 1;
+$materiaId = (int) ($data['materia_id'] ?? $partida['materia_id'] ?? 1);
+$materiaId = $materiaId > 0 ? $materiaId : 1;
 $questaoId = isset($data['questao_id']) ? (int) $data['questao_id'] : 0;
 $respostaUsuario = isset($data['resposta_usuario']) ? strtoupper((string) $data['resposta_usuario']) : null;
 $correta = isset($data['correta']) ? (int) $data['correta'] : 0;
@@ -28,13 +31,13 @@ $tempoResposta = isset($data['tempo_resposta']) ? (int) $data['tempo_resposta'] 
 $finalizar = !empty($data['finalizar']);
 
 if ($finalizar) {
-    $jogo = $data['jogo'] ?? 'queimada';
-    $pontuacao = isset($data['pontuacao']) ? (int) $data['pontuacao'] : 0;
-    $xpGanho = isset($data['xp_ganho']) ? (int) $data['xp_ganho'] : 0;
-    $acertos = isset($data['acertos']) ? (int) $data['acertos'] : 0;
-    $erros = isset($data['erros']) ? (int) $data['erros'] : 0;
-    $totalQuestoes = isset($data['total_questoes']) ? (int) $data['total_questoes'] : 0;
-    $tempo = isset($data['tempo']) ? (int) $data['tempo'] : 0;
+    $jogo = $data['jogo'] ?? $partida['jogo'] ?? 'queimada';
+    $pontuacao = (int) ($data['pontuacao'] ?? $partida['pontuacao'] ?? 0);
+    $xpGanho = (int) ($data['xp_ganho'] ?? $partida['xp_ganho'] ?? 0);
+    $acertos = (int) ($data['acertos'] ?? $partida['acertos'] ?? 0);
+    $erros = (int) ($data['erros'] ?? $partida['erros'] ?? 0);
+    $totalQuestoes = (int) ($data['total_questoes'] ?? $partida['total_questoes'] ?? 0);
+    $tempo = (int) ($data['tempo'] ?? $partida['tempo'] ?? 0);
 
     $partidaId = $_SESSION['partida_atual'] ?? 0;
     if ($partidaId > 0) {
@@ -42,7 +45,7 @@ if ($finalizar) {
         $stmt->execute([
             'jogo' => $jogo,
             'materia_id' => $materiaId,
-            'dificuldade' => $data['dificuldade'] ?? 'Médio',
+            'dificuldade' => $data['dificuldade'] ?? $partida['dificuldade'] ?? 'Médio',
             'pontuacao' => $pontuacao,
             'xp_ganho' => $xpGanho,
             'acertos' => $acertos,
@@ -79,9 +82,9 @@ $partidaId = $_SESSION['partida_atual'] ?? 0;
 if ($partidaId <= 0) {
     $partidaId = registrar_partida([
         'usuario_id' => $usuarioId,
-        'jogo' => $data['jogo'] ?? 'queimada',
+        'jogo' => $data['jogo'] ?? $partida['jogo'] ?? 'queimada',
         'materia_id' => $materiaId,
-        'dificuldade' => $data['dificuldade'] ?? 'Médio',
+        'dificuldade' => $data['dificuldade'] ?? $partida['dificuldade'] ?? 'Médio',
         'pontuacao' => 0,
         'xp_ganho' => 0,
         'acertos' => 0,
@@ -106,8 +109,8 @@ if ($questaoId > 0) {
 
 $stmt = $pdo->prepare('UPDATE partidas SET pontuacao = pontuacao + :pontuacao, xp_ganho = xp_ganho + :xp_ganho, acertos = acertos + :acertos, erros = erros + :erros, total_questoes = total_questoes + 1 WHERE id = :id');
 $stmt->execute([
-    'pontuacao' => isset($data['pontuacao']) ? (int) $data['pontuacao'] : 0,
-    'xp_ganho' => isset($data['xp_ganho']) ? (int) $data['xp_ganho'] : 0,
+    'pontuacao' => (int) ($data['pontuacao'] ?? $partida['pontuacao'] ?? 0),
+    'xp_ganho' => (int) ($data['xp_ganho'] ?? $partida['xp_ganho'] ?? 0),
     'acertos' => $correta ? 1 : 0,
     'erros' => $correta ? 0 : 1,
     'id' => $partidaId,

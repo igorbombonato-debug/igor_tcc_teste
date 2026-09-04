@@ -30,7 +30,17 @@ $materias = obter_materias($ano);
                         <p><?php echo e($materia['descricao'] ?: 'Pratique esta matéria para evoluir seu desempenho.'); ?></p>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-muted">Desempenho: <?php echo calcular_percentual_materia($user['id'], $materia['id']); ?>%</span>
-                            <a href="/igor_tcc_teste/jogos/index.php?materia=<?php echo (int) $materia['id']; ?>" class="btn btn-sm btn-primary">Estudar</a>
+                            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                                <?php
+                                $buscaVideo = $materia['nome'] . ' ' . $materia['ano_escolar'] . 'º ano matemática videoaula';
+                                ?>
+                                <a href="https://www.youtube.com/results?search_query=<?php echo rawurlencode($buscaVideo); ?>" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-youtube"></i> Videoaula
+                                </a>
+                                <a href="/igor_tcc_teste/jogos/index.php?materia_id=<?php echo (int) $materia['id']; ?>" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-controller"></i> Jogar
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

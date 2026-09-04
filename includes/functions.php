@@ -64,7 +64,14 @@ function obter_materias($ano = null): array
 {
     global $pdo;
 
-    $sql = 'SELECT * FROM materias WHERE ativo = 1';
+    $sql = 'SELECT m.*
+            FROM materias m
+            INNER JOIN (
+                SELECT MIN(id) AS id
+                FROM materias
+                WHERE ativo = 1
+                GROUP BY ano_escolar, nome
+            ) unicas ON unicas.id = m.id';
     $params = [];
 
     if ($ano !== null) {
@@ -185,7 +192,7 @@ function atualizar_desempenho_usuario(int $usuarioId, int $materiaId, int $acert
         $novasPartidas = (int) $registro['partidas'] + 1;
         $novosAcertos = (int) $registro['acertos'] + $acertos;
         $novosErros = (int) $registro['erros'] + $erros;
-        $percentual = calcular_percentual($novosAcertos, $novasPartidas + $novosErros);
+        $percentual = calcular_percentual($novosAcertos, $novosAcertos + $novosErros);
         $classificacao = classificar_desempenho($percentual);
 
         $update = $pdo->prepare('UPDATE desempenho SET partidas = :partidas, acertos = :acertos, erros = :erros, percentual = :percentual, classificacao = :classificacao, updated_at = NOW() WHERE id = :id');
