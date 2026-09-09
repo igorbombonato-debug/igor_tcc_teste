@@ -14,6 +14,38 @@ if (empty($questoes)) {
     $questoes = obter_questoes_por_ano($ano);
 }
 
+// Garante dez rodadas, usando questões do mesmo ano se a matéria tiver poucas.
+if (count($questoes) < 10) {
+    $questoesPorAno = obter_questoes_por_ano($ano, $dificuldade);
+    $idsExistentes = array_column($questoes, 'id');
+    foreach ($questoesPorAno as $questao) {
+        if (!in_array($questao['id'], $idsExistentes, true)) {
+            $questoes[] = $questao;
+            $idsExistentes[] = $questao['id'];
+        }
+        if (count($questoes) >= 10) {
+            break;
+        }
+    }
+}
+
+if (count($questoes) < 10) {
+    $questoesPorAno = obter_questoes_por_ano($ano);
+    $idsExistentes = array_column($questoes, 'id');
+    foreach ($questoesPorAno as $questao) {
+        if (!in_array($questao['id'], $idsExistentes, true)) {
+            $questoes[] = $questao;
+            $idsExistentes[] = $questao['id'];
+        }
+        if (count($questoes) >= 10) {
+            break;
+        }
+    }
+}
+
+shuffle($questoes);
+$questoes = array_slice($questoes, 0, 10);
+
 $questaoAtual = $questoes[0] ?? null;
 if ($questaoAtual) {
     $alternativas = [
@@ -25,15 +57,23 @@ if ($questaoAtual) {
 }
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=2">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=3">
 <div class="game-shell">
         <section class="team-setup card-glass" id="teamSetup">
             <div class="setup-copy">
                 <span class="section-badge">Antes de jogar</span>
                 <h1>Monte sua equipe</h1>
-                <p>Forme dois times aleatoriamente antes de começar.</p>
+                <p>Digite os nomes dos jogadores. Eles serão divididos entre os dois times.</p>
             </div>
-            <div class="setup-players" id="setupPlayers"></div>
+            <div class="setup-players" id="setupPlayers">
+                <?php foreach (['Jogador 1', 'Jogador 2', 'Jogador 3', 'Jogador 4', 'Jogador 5', 'Jogador 6', 'Jogador 7', 'Jogador 8'] as $indice => $placeholder): ?>
+                    <label class="setup-player-field">
+                        <span>Jogador <?php echo $indice + 1; ?></span>
+                        <input type="text" class="nome-jogador-input" maxlength="30" placeholder="<?php echo $placeholder; ?>" autocomplete="off">
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <div class="setup-preview" id="setupPreview" aria-live="polite"></div>
             <div class="setup-actions">
                 <button class="btn btn-outline-primary" id="sortearTimes" type="button"><i class="bi bi-shuffle"></i> Sortear times</button>
                 <button class="btn btn-primary" id="iniciarPartida" type="button"><i class="bi bi-play-fill"></i> Começar partida</button>
@@ -57,19 +97,24 @@ if ($questaoAtual) {
             <div class="turn-indicator" id="turnIndicator">Prepare os times para começar.</div>
             <div class="quadra" aria-label="Quadra da queimada matemática">
                 <section class="time-panel time-azul">
-                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Azul</strong><small>Jogador da vez destacado</small></div></div>
+                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Azul</strong><small>Qualquer jogador pode responder</small></div></div>
                     <div class="jogadores" id="timeAzul"></div>
                 </section>
                 <div class="quadra-divider"><span>VS</span></div>
                 <section class="time-panel time-vermelho">
-                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Vermelho</strong><small>Jogador da vez destacado</small></div></div>
+                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Vermelho</strong><small>Qualquer jogador pode responder</small></div></div>
                     <div class="jogadores" id="timeVermelho"></div>
                 </section>
             </div>
         </div>
 
         <div id="gameOver" class="game-over hidden">
-            <h2>GAME OVER</h2>
+                <h2 id="resultadoTitulo">Fim da partida</h2>
+                <div class="winner-box"><span>Vencedor</span><strong id="vencedor">-</strong></div>
+                <div class="team-scoreboard">
+                    <div class="team-score team-score-blue"><span>Time Azul</span><strong id="pontosAzulFinal">0</strong><small>pontos</small></div>
+                    <div class="team-score team-score-red"><span>Time Vermelho</span><strong id="pontosVermelhoFinal">0</strong><small>pontos</small></div>
+                </div>
             <p>Pontuação: <strong id="finalPontos">0</strong></p>
             <p>Acertos: <strong id="finalAcertos">0</strong></p>
             <p>Erros: <strong id="finalErros">0</strong></p>
@@ -97,22 +142,46 @@ if ($questaoAtual) {
     let timer = null;
     let combo = 0;
     let turnLocked = false;
+        let partidaFinalizada = false;
+        const registrosPendentes = [];
+        const pontosTimes = { azul: 0, vermelho: 0 };
+    let timeDaVez = 'azul';
     const jogadoresEliminados = new Set();
     let times = { azul: [], vermelho: [] };
     let jogadorDaVez = null;
-    const nomesJogadores = ['Luna', 'Davi', 'Bia', 'Ravi', 'Noah', 'Lia', 'Theo', 'Maya'];
-
     function embaralhar(lista) {
         return [...lista].sort(() => Math.random() - 0.5);
     }
 
+    function obterNomesJogadores() {
+        const nomes = [...document.querySelectorAll('.nome-jogador-input')]
+            .map(input => input.value.trim())
+            .filter(Boolean);
+
+        if (nomes.length !== 8) {
+            alert('Preencha os 8 nomes dos jogadores antes de continuar.');
+            return null;
+        }
+
+        return nomes;
+    }
+
+    function escaparHtml(texto) {
+        const div = document.createElement('div');
+        div.textContent = texto;
+        return div.innerHTML;
+    }
+
     function montarTimes() {
-        const jogadores = embaralhar(nomesJogadores);
+        const nomes = obterNomesJogadores();
+        if (!nomes) return false;
+
+        const jogadores = embaralhar(nomes);
         times = { azul: jogadores.slice(0, 4), vermelho: jogadores.slice(4, 8) };
-        document.getElementById('setupPlayers').innerHTML = `
-            <div class="setup-team setup-team-blue"><strong>Time Azul</strong><span>${times.azul.join(' • ')}</span></div>
-            <div class="setup-team setup-team-red"><strong>Time Vermelho</strong><span>${times.vermelho.join(' • ')}</span></div>`;
-        renderizarTimes();
+        document.getElementById('setupPreview').innerHTML = `
+            <div class="setup-team setup-team-blue"><strong>Time Azul</strong><span>${times.azul.map(escaparHtml).join(' • ')}</span></div>
+            <div class="setup-team setup-team-red"><strong>Time Vermelho</strong><span>${times.vermelho.map(escaparHtml).join(' • ')}</span></div>`;
+        return true;
     }
 
     function renderizarTimes() {
@@ -129,25 +198,29 @@ if ($questaoAtual) {
     }
 
     function prepararJogadorDaVez() {
-        const vivos = [...document.querySelectorAll('.personagem')].filter(jogador => !jogadoresEliminados.has(jogador.dataset.jogador));
+        const jogadoresDoTime = times[timeDaVez].map((_, index) => `${timeDaVez}-${index}`);
+        const vivos = [...document.querySelectorAll('.personagem')].filter(jogador =>
+            jogadoresDoTime.includes(jogador.dataset.jogador) && !jogadoresEliminados.has(jogador.dataset.jogador)
+        );
         if (!vivos.length) return;
-        const escolhido = vivos[Math.floor(Math.random() * vivos.length)];
-        jogadorDaVez = escolhido.dataset.jogador;
-        vivos.forEach(jogador => {
-            jogador.disabled = jogador !== escolhido;
-            jogador.classList.toggle('aguardando', jogador !== escolhido);
-            jogador.classList.toggle('vez', jogador === escolhido);
+        jogadorDaVez = null;
+        document.querySelectorAll('.personagem').forEach(jogador => {
+            const doTimeDaVez = jogador.dataset.jogador.startsWith(`${timeDaVez}-`);
+            const disponivel = doTimeDaVez && !jogadoresEliminados.has(jogador.dataset.jogador);
+            jogador.disabled = !disponivel;
+            jogador.classList.toggle('aguardando', !disponivel);
+            jogador.classList.toggle('vez', disponivel);
         });
-        document.getElementById('turnIndicator').textContent = `Vez de ${escolhido.split('-')[0] === 'azul' ? 'um jogador do Time Azul' : 'um jogador do Time Vermelho'}: escolha o ícone destacado.`;
+        document.getElementById('turnIndicator').textContent = `Vez do Time ${timeDaVez === 'azul' ? 'Azul' : 'Vermelho'}: qualquer jogador do time pode responder.`;
     }
 
     function atualizarHud() {
         document.getElementById('pontos').textContent = pontos;
         document.getElementById('xp').textContent = xp;
         document.getElementById('vidas').textContent = vidas;
-        document.getElementById('questaoAtual').textContent = Math.min(indice + 1, questoes.length);
+        document.getElementById('questaoAtual').textContent = Math.min(indice + 1, 10);
         document.getElementById('tempo').textContent = tempo;
-        document.getElementById('progresso').textContent = Math.round(((indice) / Math.max(questoes.length, 1)) * 100) + '%';
+        document.getElementById('progresso').textContent = Math.round((indice / 10) * 100) + '%';
     }
 
     function mostrarQuestao() {
@@ -190,6 +263,7 @@ if ($questaoAtual) {
             const base = q.dificuldade === 'Difícil' ? 180 : q.dificuldade === 'Médio' ? 140 : 100;
             const bonus = combo * 50;
             pontos += base + bonus;
+                pontosTimes[timeDaVez] += base + bonus;
             xp += q.dificuldade === 'Difícil' ? 30 : q.dificuldade === 'Médio' ? 20 : 15;
             document.getElementById('feedback').textContent = 'ACERTOU!';
             document.getElementById('feedback').classList.remove('hidden');
@@ -211,10 +285,11 @@ if ($questaoAtual) {
 
         clearInterval(timer);
         indice += 1;
+        timeDaVez = timeDaVez === 'azul' ? 'vermelho' : 'azul';
         atualizarHud();
 
         setTimeout(() => {
-            if (vidas <= 0) {
+            if (indice >= 10) {
                 finalizarJogo();
             } else {
                 turnLocked = false;
@@ -222,7 +297,7 @@ if ($questaoAtual) {
             }
         }, 700);
 
-        fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+        const registro = fetch('/igor_tcc_teste/api/registrar_resposta.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -246,18 +321,28 @@ if ($questaoAtual) {
                 }
             })
         }).catch(() => {});
+        registrosPendentes.push(registro);
     }
 
     function finalizarJogo() {
+        if (partidaFinalizada) return;
+        partidaFinalizada = true;
         clearInterval(timer);
         const totalPontos = pontos;
         const totalXp = xp;
         document.getElementById('gameOver').classList.remove('hidden');
+        const vencedor = pontosTimes.azul === pontosTimes.vermelho
+            ? 'Empate'
+            : pontosTimes.azul > pontosTimes.vermelho ? 'Time Azul' : 'Time Vermelho';
+        document.getElementById('vencedor').textContent = vencedor;
+        document.getElementById('resultadoTitulo').textContent = vencedor === 'Empate' ? 'Partida empatada' : `${vencedor} venceu!`;
+        document.getElementById('pontosAzulFinal').textContent = pontosTimes.azul;
+        document.getElementById('pontosVermelhoFinal').textContent = pontosTimes.vermelho;
         document.getElementById('finalPontos').textContent = totalPontos;
         document.getElementById('finalAcertos').textContent = acertos;
         document.getElementById('finalErros').textContent = erros;
 
-        fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+        Promise.all(registrosPendentes).then(() => fetch('/igor_tcc_teste/api/registrar_resposta.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -270,16 +355,16 @@ if ($questaoAtual) {
                 xp_ganho: totalXp,
                 acertos,
                 erros,
-                total_questoes: questoes.length,
+                total_questoes: 10,
                 tempo: 0,
                 ano_escolar: anoEscolar
             })
-        }).catch(() => {});
+        })).catch(() => {});
     }
 
     function responderComJogador(event) {
         const personagem = event.currentTarget;
-        if (turnLocked || personagem.disabled || personagem.dataset.jogador !== jogadorDaVez) return;
+        if (turnLocked || personagem.disabled || !personagem.dataset.jogador.startsWith(`${timeDaVez}-`)) return;
         const resposta = personagem.dataset.resposta;
         const q = questoes[indice];
         if (!q) return;
@@ -288,13 +373,13 @@ if ($questaoAtual) {
 
     document.getElementById('sortearTimes').addEventListener('click', montarTimes);
     document.getElementById('iniciarPartida').addEventListener('click', () => {
+        if (!montarTimes()) return;
         document.getElementById('teamSetup').classList.add('d-none');
         document.querySelector('.game-area').classList.remove('d-none');
-        montarTimes();
+        renderizarTimes();
         mostrarQuestao();
     });
 
     document.querySelector('.game-area').classList.add('d-none');
-    montarTimes();
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
