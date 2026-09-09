@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="btn btn-primary w-100">ENTRAR</button>
                 <div class="d-flex justify-content-between mt-3">
                     <a href="/igor_tcc_teste/public/cadastro.php" class="text-decoration-none">Criar conta</a>
-                    <a href="#" class="text-decoration-none">Esqueci minha senha</a>
+                    <a href="/igor_tcc_teste/public/recuperar_senha.php" class="text-decoration-none">Esqueci minha senha</a>
                 </div>
             </form>
         </div>

@@ -10,7 +10,7 @@ $ano = (int) ($user['ano_escolar'] ?? 6);
 $materiaId = (int) ($_GET['materia_id'] ?? 1);
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=6">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=7">
 <div class="memory-shell">
     <div class="container">
         <div class="memory-header card-glass">
@@ -36,7 +36,10 @@ $materiaId = (int) ($_GET['materia_id'] ?? 1);
         <h2 id="memoryResultTitle">Parabéns!</h2>
         <p id="memoryResultMessage">Você concluiu o desafio.</p>
         <div class="memory-result-stats" id="memoryResultStats"></div>
-        <button type="button" class="btn btn-primary" id="memoryResultButton"><i class="bi bi-arrow-clockwise"></i> Jogar novamente</button>
+        <div class="memory-result-actions">
+            <button type="button" class="btn btn-primary" id="memoryResultButton"><i class="bi bi-arrow-clockwise"></i> Jogar novamente</button>
+            <a href="/igor_tcc_teste/jogos/index.php" class="btn btn-outline-primary"><i class="bi bi-house"></i> Voltar ao menu</a>
+        </div>
     </section>
 </div>
 

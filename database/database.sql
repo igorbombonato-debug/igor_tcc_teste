@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS desempenho;
 DROP TABLE IF EXISTS partidas;
 DROP TABLE IF EXISTS questoes;
 DROP TABLE IF EXISTS materias;
+DROP TABLE IF EXISTS recuperacao_senhas;
 DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS configuracoes;
 
@@ -30,6 +31,17 @@ CREATE TABLE usuarios (
     ativo TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_materias_ano_nome (ano_escolar, nome)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Armazena tokens temporários usados para redefinir senhas.
+CREATE TABLE recuperacao_senhas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    token_hash CHAR(64) NOT NULL UNIQUE,
+    expira_em DATETIME NOT NULL,
+    usado TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_recuperacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Guarda as matérias disponíveis por série escolar.

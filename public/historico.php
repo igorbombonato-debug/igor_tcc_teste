@@ -5,6 +5,18 @@ require_login();
 
 $pageTitle = 'Histórico | MathPlay';
 $user = get_logged_user();
+
+// Exclui somente uma partida pertencente ao usuário autenticado.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir_partida'])) {
+    $partidaId = (int) $_POST['excluir_partida'];
+    if ($partidaId > 0) {
+        $delete = $pdo->prepare('DELETE FROM partidas WHERE id = :id AND usuario_id = :usuario_id');
+        $delete->execute(['id' => $partidaId, 'usuario_id' => $user['id']]);
+    }
+    header('Location: /igor_tcc_teste/public/historico.php');
+    exit;
+}
+
 // Busca as partidas antigas primeiro para manter a sequência cronológica.
 $stmt = $pdo->prepare('SELECT p.*, m.nome as nome_materia FROM partidas p LEFT JOIN materias m ON m.id = p.materia_id WHERE p.usuario_id = :id ORDER BY p.created_at ASC, p.id ASC LIMIT 50');
 $stmt->execute(['id' => $user['id']]);
@@ -78,9 +90,14 @@ function texto_alternativa(array $questao, ?string $letra): string
                     </tr>
                     <tr>
                         <td colspan="10" class="history-toggle-cell">
-                            <button class="btn btn-sm btn-outline-primary history-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#detalhes-<?php echo (int) $partida['id']; ?>" aria-expanded="false">
-                                <i class="bi bi-chevron-down"></i> Ver mais
-                            </button>
+                            <div class="history-actions">
+                                <button class="btn btn-sm btn-outline-primary history-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#detalhes-<?php echo (int) $partida['id']; ?>" aria-expanded="false">
+                                    <i class="bi bi-chevron-down"></i> Ver mais
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-history-button" type="button" data-partida-id="<?php echo (int) $partida['id']; ?>" data-bs-toggle="modal" data-bs-target="#deleteHistoryModal">
+                                    <i class="bi bi-trash3"></i> Excluir
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     <tr id="detalhes-<?php echo (int) $partida['id']; ?>" class="history-details-row collapse">
@@ -103,7 +120,15 @@ function texto_alternativa(array $questao, ?string $letra): string
                                     </table>
                                 </div>
                                 <?php else: ?>
-                                    <p class="text-muted mb-0">Ainda não há respostas detalhadas para esta partida.</p>
+                                    <strong>Resumo detalhado da partida</strong>
+                                    <div class="history-summary-grid mt-3">
+                                        <div><span>Tipo</span><strong><?php echo e(ucfirst($partida['jogo'])); ?></strong></div>
+                                        <div><span>Questões</span><strong><?php echo (int) $partida['total_questoes']; ?></strong></div>
+                                        <div><span>Acertos</span><strong><?php echo (int) $partida['acertos']; ?></strong></div>
+                                        <div><span>Erros</span><strong><?php echo (int) $partida['erros']; ?></strong></div>
+                                        <div><span>Pontuação</span><strong><?php echo (int) $partida['pontuacao']; ?></strong></div>
+                                        <div><span>XP ganho</span><strong><?php echo (int) $partida['xp_ganho']; ?></strong></div>
+                                    </div>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -112,6 +137,24 @@ function texto_alternativa(array $questao, ?string $letra): string
         </table>
     </div>
 </section>
+<div class="modal fade" id="deleteHistoryModal" tabindex="-1" aria-labelledby="deleteHistoryTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content history-delete-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteHistoryTitle"><i class="bi bi-exclamation-triangle"></i> Excluir partida?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">Esta ação removerá a partida e seus detalhes do histórico.</div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST">
+                    <input type="hidden" name="excluir_partida" id="deleteHistoryId">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash3"></i> Confirmar exclusão</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     document.querySelectorAll('.history-toggle').forEach(button => {
         const target = document.querySelector(button.dataset.bsTarget);
@@ -120,6 +163,11 @@ function texto_alternativa(array $questao, ?string $letra): string
         });
         target?.addEventListener('hidden.bs.collapse', () => {
             button.innerHTML = '<i class="bi bi-chevron-down"></i> Ver mais';
+        });
+    });
+    document.querySelectorAll('.delete-history-button').forEach(button => {
+        button.addEventListener('click', () => {
+            document.getElementById('deleteHistoryId').value = button.dataset.partidaId;
         });
     });
 </script>

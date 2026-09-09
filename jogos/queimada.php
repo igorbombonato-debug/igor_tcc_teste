@@ -60,7 +60,7 @@ if ($questaoAtual) {
 }
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=3">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=5">
 <div class="game-shell">
         <section class="team-setup card-glass" id="teamSetup">
             <div class="setup-copy">
@@ -98,14 +98,29 @@ if ($questaoAtual) {
             </div>
 
             <div class="turn-indicator" id="turnIndicator">Prepare os times para começar.</div>
-            <div class="quadra" aria-label="Quadra da queimada matemática">
+            <div class="active-player-card" id="activePlayerCard">
+                <span class="section-badge">Jogador da vez</span>
+                <strong id="jogadorDaVezNome">-</strong>
+                <small id="jogadorDaVezTime">-</small>
+            </div>
+            <div class="answer-area">
+                <div class="answer-options" id="answerOptions"></div>
+                <form id="answerForm" class="answer-form">
+                    <label for="respostaInput">Digite a letra ou o texto da resposta</label>
+                    <div class="answer-input-row">
+                        <input id="respostaInput" type="text" maxlength="255" autocomplete="off" placeholder="Ex.: A ou resposta">
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-send-fill"></i> Responder</button>
+                    </div>
+                </form>
+            </div>
+            <div class="quadra" aria-label="Times da queimada matemática">
                 <section class="time-panel time-azul">
-                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Azul</strong><small>Qualquer jogador pode responder</small></div></div>
+                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Azul</strong><small>Jogadores disponíveis</small></div></div>
                     <div class="jogadores" id="timeAzul"></div>
                 </section>
                 <div class="quadra-divider"><span>VS</span></div>
                 <section class="time-panel time-vermelho">
-                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Vermelho</strong><small>Qualquer jogador pode responder</small></div></div>
+                    <div class="time-heading"><span class="team-dot"></span><div><strong>Time Vermelho</strong><small>Jogadores disponíveis</small></div></div>
                     <div class="jogadores" id="timeVermelho"></div>
                 </section>
             </div>
@@ -140,7 +155,6 @@ if ($questaoAtual) {
     let indice = 0;
     let pontos = 0;
     let xp = 0;
-    let vidas = 3;
     let acertos = 0;
     let erros = 0;
     let tempo = 60;
@@ -150,11 +164,13 @@ if ($questaoAtual) {
         let partidaFinalizada = false;
         const registrosPendentes = [];
         const pontosTimes = { azul: 0, vermelho: 0 };
+        let timeEliminadoFinal = null;
     // A primeira rodada começa no Time Azul e alterna após cada resposta.
     let timeDaVez = 'azul';
     const jogadoresEliminados = new Set();
     let times = { azul: [], vermelho: [] };
     let jogadorDaVez = null;
+    let jogadorDaVezNome = '';
     // Embaralha os nomes antes de dividir os times.
     function embaralhar(lista) {
         return [...lista].sort(() => Math.random() - 0.5);
@@ -193,43 +209,35 @@ if ($questaoAtual) {
         return true;
     }
 
-    // Desenha os jogadores e associa uma alternativa a cada um.
+    // Desenha os nomes dos dois times e marca os jogadores eliminados.
     function renderizarTimes() {
-        const respostas = questoes[indice] ? { A: questoes[indice].alternativa_a, B: questoes[indice].alternativa_b, C: questoes[indice].alternativa_c, D: questoes[indice].alternativa_d } : {};
-        const letras = ['A', 'B', 'C', 'D'];
         ['azul', 'vermelho'].forEach(time => {
             document.getElementById(`time${time[0].toUpperCase()}${time.slice(1)}`).innerHTML = times[time].map((nome, index) => {
                 const id = `${time}-${index}`;
-                const letra = letras[index];
-                return `<button class="personagem" type="button" data-jogador="${id}" data-resposta="${letra}"><i class="bi bi-person-fill avatar"></i><strong class="nome-jogador">${nome}</strong><span class="resposta">${letra}: ${respostas[letra] || ''}</span></button>`;
+                const eliminado = jogadoresEliminados.has(id);
+                return `<div class="personagem ${eliminado ? 'eliminado' : ''}" data-jogador="${id}"><i class="bi bi-person-fill avatar"></i><strong class="nome-jogador">${escaparHtml(nome)}</strong><span class="resposta">${eliminado ? 'ELIMINADO' : 'Disponível'}</span></div>`;
             }).join('');
         });
-        document.querySelectorAll('.personagem').forEach(personagem => personagem.addEventListener('click', responderComJogador));
     }
 
-    // Libera todos os jogadores vivos somente do time ativo.
+    // Sorteia um jogador vivo do time que recebeu a pergunta.
     function prepararJogadorDaVez() {
         const jogadoresDoTime = times[timeDaVez].map((_, index) => `${timeDaVez}-${index}`);
-        const vivos = [...document.querySelectorAll('.personagem')].filter(jogador =>
-            jogadoresDoTime.includes(jogador.dataset.jogador) && !jogadoresEliminados.has(jogador.dataset.jogador)
-        );
-        if (!vivos.length) return;
-        jogadorDaVez = null;
-        document.querySelectorAll('.personagem').forEach(jogador => {
-            const doTimeDaVez = jogador.dataset.jogador.startsWith(`${timeDaVez}-`);
-            const disponivel = doTimeDaVez && !jogadoresEliminados.has(jogador.dataset.jogador);
-            jogador.disabled = !disponivel;
-            jogador.classList.toggle('aguardando', !disponivel);
-            jogador.classList.toggle('vez', disponivel);
-        });
-        document.getElementById('turnIndicator').textContent = `Vez do Time ${timeDaVez === 'azul' ? 'Azul' : 'Vermelho'}: qualquer jogador do time pode responder.`;
+        const vivos = jogadoresDoTime.filter(id => !jogadoresEliminados.has(id));
+        if (!vivos.length) return false;
+        jogadorDaVez = vivos[Math.floor(Math.random() * vivos.length)];
+        jogadorDaVezNome = times[timeDaVez][Number(jogadorDaVez.split('-')[1])];
+        document.getElementById('jogadorDaVezNome').textContent = jogadorDaVezNome;
+        document.getElementById('jogadorDaVezTime').textContent = `Time ${timeDaVez === 'azul' ? 'Azul' : 'Vermelho'}`;
+        document.getElementById('turnIndicator').textContent = `Time ${timeDaVez === 'azul' ? 'Azul' : 'Vermelho'} responde agora.`;
+        return true;
     }
 
     // Atualiza pontos, XP, vidas, rodada, tempo e progresso na interface.
     function atualizarHud() {
         document.getElementById('pontos').textContent = pontos;
         document.getElementById('xp').textContent = xp;
-        document.getElementById('vidas').textContent = vidas;
+        document.getElementById('vidas').textContent = times[timeDaVez].filter((_, index) => !jogadoresEliminados.has(`${timeDaVez}-${index}`)).length;
         document.getElementById('questaoAtual').textContent = Math.min(indice + 1, 10);
         document.getElementById('tempo').textContent = tempo;
         document.getElementById('progresso').textContent = Math.round((indice / 10) * 100) + '%';
@@ -244,8 +252,14 @@ if ($questaoAtual) {
         const q = questoes[indice];
         document.getElementById('enunciado').textContent = q.enunciado;
         const respostas = { A: q.alternativa_a, B: q.alternativa_b, C: q.alternativa_c, D: q.alternativa_d };
-        document.querySelectorAll('.personagem').forEach(jogador => jogador.querySelector('.resposta').textContent = `${jogador.dataset.resposta}: ${respostas[jogador.dataset.resposta]}`);
-        prepararJogadorDaVez();
+        document.getElementById('answerOptions').innerHTML = Object.entries(respostas).map(([letra, texto]) => `<div class="answer-option"><strong>${letra}</strong><span>${escaparHtml(texto)}</span></div>`).join('');
+        if (!prepararJogadorDaVez()) {
+            finalizarJogo();
+            return;
+        }
+        renderizarTimes();
+        document.getElementById('respostaInput').value = '';
+        document.getElementById('respostaInput').focus();
         document.getElementById('feedback').classList.add('hidden');
         document.getElementById('feedback').textContent = 'ACERTOU!';
         tempo = 60;
@@ -288,25 +302,24 @@ if ($questaoAtual) {
         } else {
             combo = 0;
             erros += 1;
-            vidas -= 1;
             document.getElementById('feedback').textContent = 'QUASE!';
             document.getElementById('feedback').classList.remove('hidden');
             document.getElementById('feedback').classList.remove('success');
             document.getElementById('feedback').classList.add('error');
-            if (jogadorSelecionado) {
-                jogadoresEliminados.add(jogadorSelecionado.dataset.jogador);
-                jogadorSelecionado.classList.add('eliminado');
-                jogadorSelecionado.disabled = true;
-            }
+            jogadoresEliminados.add(jogadorDaVez);
         }
 
         clearInterval(timer);
         indice += 1;
+        const jogadoresRestantes = times[timeResposta].filter((_, index) => !jogadoresEliminados.has(`${timeResposta}-${index}`)).length;
+        const timeEliminado = jogadoresRestantes === 0;
+        if (timeEliminado) timeEliminadoFinal = timeResposta;
+        // Cada pergunta pertence a apenas um time; a próxima sempre alterna o turno.
         timeDaVez = timeDaVez === 'azul' ? 'vermelho' : 'azul';
         atualizarHud();
 
         setTimeout(() => {
-            if (indice >= 10) {
+            if (indice >= 10 || timeEliminado) {
                 finalizarJogo();
             } else {
                 turnLocked = false;
@@ -323,7 +336,7 @@ if ($questaoAtual) {
                 // A primeira resposta da rodada zero inicia um novo registro de partida.
                 nova_partida: indice === 1,
                 resposta_usuario: respostaUsuario.resposta,
-                jogador_nome: respostaUsuario.jogador ? times[timeResposta][Number(respostaUsuario.jogador.split('-')[1])] : 'Tempo esgotado',
+                jogador_nome: jogadorDaVezNome || 'Tempo esgotado',
                 time_jogador: timeResposta,
                 correta: correta ? 1 : 0,
                 tempo_resposta: 60 - tempo,
@@ -353,7 +366,9 @@ if ($questaoAtual) {
         const totalPontos = pontos;
         const totalXp = xp;
         document.getElementById('gameOver').classList.remove('hidden');
-        const vencedor = pontosTimes.azul === pontosTimes.vermelho
+        const vencedor = timeEliminadoFinal
+            ? (timeEliminadoFinal === 'azul' ? 'Time Vermelho' : 'Time Azul')
+            : pontosTimes.azul === pontosTimes.vermelho
             ? 'Empate'
             : pontosTimes.azul > pontosTimes.vermelho ? 'Time Azul' : 'Time Vermelho';
         document.getElementById('vencedor').textContent = vencedor;
@@ -385,13 +400,25 @@ if ($questaoAtual) {
         })).catch(() => {});
     }
 
+    function normalizarResposta(valor) {
+        return valor.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
     function responderComJogador(event) {
-        const personagem = event.currentTarget;
-        if (turnLocked || personagem.disabled || !personagem.dataset.jogador.startsWith(`${timeDaVez}-`)) return;
-        const resposta = personagem.dataset.resposta;
+        event.preventDefault();
+        if (turnLocked) return;
         const q = questoes[indice];
         if (!q) return;
-        registrarResposta({ resposta, jogador: personagem.dataset.jogador }, resposta === q.resposta_correta);
+        const respostaDigitada = normalizarResposta(document.getElementById('respostaInput').value);
+        const alternativas = { A: q.alternativa_a, B: q.alternativa_b, C: q.alternativa_c, D: q.alternativa_d };
+        const letraCorreta = q.resposta_correta.toUpperCase();
+        const respostaCorreta = normalizarResposta(alternativas[letraCorreta]);
+        const resposta = Object.keys(alternativas).find(letra => respostaDigitada === letra.toLowerCase() || respostaDigitada === normalizarResposta(alternativas[letra]));
+        if (!resposta) {
+            document.getElementById('respostaInput').focus();
+            return;
+        }
+        registrarResposta({ resposta, jogador: jogadorDaVez }, resposta === letraCorreta || respostaDigitada === respostaCorreta);
     }
 
     document.getElementById('sortearTimes').addEventListener('click', montarTimes);
@@ -402,6 +429,7 @@ if ($questaoAtual) {
         renderizarTimes();
         mostrarQuestao();
     });
+    document.getElementById('answerForm').addEventListener('submit', responderComJogador);
 
     document.querySelector('.game-area').classList.add('d-none');
 </script>
