@@ -1,6 +1,9 @@
+-- Cria o banco usando UTF-8 para preservar acentos.
 CREATE DATABASE IF NOT EXISTS mathplay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- Seleciona o banco que receberá as tabelas abaixo.
 USE mathplay;
 
+-- Remove tabelas antigas para permitir uma instalação limpa.
 DROP TABLE IF EXISTS usuario_conquistas;
 DROP TABLE IF EXISTS conquistas;
 DROP TABLE IF EXISTS respostas;
@@ -11,6 +14,7 @@ DROP TABLE IF EXISTS materias;
 DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS configuracoes;
 
+-- Guarda os dados de login, série, XP, nível e pontuação dos alunos.
 CREATE TABLE usuarios (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(255) NOT NULL,
@@ -28,6 +32,7 @@ CREATE TABLE usuarios (
     UNIQUE KEY uq_materias_ano_nome (ano_escolar, nome)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Guarda as matérias disponíveis por série escolar.
 CREATE TABLE materias (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(255) NOT NULL,
@@ -38,6 +43,7 @@ CREATE TABLE materias (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Guarda perguntas, alternativas e respostas corretas.
 CREATE TABLE questoes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     materia_id INT NOT NULL,
@@ -55,11 +61,13 @@ CREATE TABLE questoes (
     CONSTRAINT fk_questoes_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Guarda o resumo de cada partida e seus resultados.
 CREATE TABLE partidas (
     id INT PRIMARY KEY AUTO_INCREMENT,
     usuario_id INT NOT NULL,
     jogo VARCHAR(100) NOT NULL,
     materia_id INT DEFAULT NULL,
+    ano_escolar TINYINT DEFAULT NULL,
     dificuldade VARCHAR(20) DEFAULT 'Médio',
     pontuacao INT NOT NULL DEFAULT 0,
     xp_ganho INT NOT NULL DEFAULT 0,
@@ -67,16 +75,20 @@ CREATE TABLE partidas (
     erros INT NOT NULL DEFAULT 0,
     total_questoes INT NOT NULL DEFAULT 0,
     tempo INT NOT NULL DEFAULT 0,
+    equipe_nomes TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_partidas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     CONSTRAINT fk_partidas_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Guarda cada questão respondida dentro de uma partida.
 CREATE TABLE respostas (
     id INT PRIMARY KEY AUTO_INCREMENT,
     partida_id INT NOT NULL,
     questao_id INT NOT NULL,
     resposta_usuario CHAR(1) DEFAULT NULL,
+    jogador_nome VARCHAR(100) DEFAULT NULL,
+    time_jogador ENUM('azul', 'vermelho') DEFAULT NULL,
     correta TINYINT(1) NOT NULL DEFAULT 0,
     tempo_resposta INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -85,6 +97,7 @@ CREATE TABLE respostas (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+-- Consolida o desempenho do aluno por matéria.
 CREATE TABLE desempenho (
     id INT PRIMARY KEY AUTO_INCREMENT,
     usuario_id INT NOT NULL,

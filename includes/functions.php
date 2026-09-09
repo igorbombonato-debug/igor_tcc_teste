@@ -7,6 +7,21 @@ function e(string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+function avatar_url(?string $avatar): ?string
+{
+    $avatar = trim((string) $avatar);
+
+    if ($avatar === '') {
+        return null;
+    }
+
+    if (filter_var($avatar, FILTER_VALIDATE_URL)) {
+        return $avatar;
+    }
+
+    return str_starts_with($avatar, '/igor_tcc_teste/assets/img/avatars/') ? $avatar : null;
+}
+
 function get_nivel_por_xp(int $xp): int
 {
     $nivel = 1;
@@ -130,14 +145,15 @@ function registrar_partida(array $dados): int
 {
     global $pdo;
 
-    $sql = 'INSERT INTO partidas (usuario_id, jogo, materia_id, dificuldade, pontuacao, xp_ganho, acertos, erros, total_questoes, tempo, created_at)
-            VALUES (:usuario_id, :jogo, :materia_id, :dificuldade, :pontuacao, :xp_ganho, :acertos, :erros, :total_questoes, :tempo, NOW())';
+            $sql = 'INSERT INTO partidas (usuario_id, jogo, materia_id, ano_escolar, dificuldade, pontuacao, xp_ganho, acertos, erros, total_questoes, tempo, equipe_nomes, created_at)
+                VALUES (:usuario_id, :jogo, :materia_id, :ano_escolar, :dificuldade, :pontuacao, :xp_ganho, :acertos, :erros, :total_questoes, :tempo, :equipe_nomes, NOW())';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         'usuario_id' => $dados['usuario_id'],
         'jogo' => $dados['jogo'],
         'materia_id' => $dados['materia_id'],
+        'ano_escolar' => $dados['ano_escolar'] ?? null,
         'dificuldade' => $dados['dificuldade'],
         'pontuacao' => $dados['pontuacao'],
         'xp_ganho' => $dados['xp_ganho'],
@@ -145,6 +161,7 @@ function registrar_partida(array $dados): int
         'erros' => $dados['erros'],
         'total_questoes' => $dados['total_questoes'],
         'tempo' => $dados['tempo'],
+        'equipe_nomes' => $dados['equipe_nomes'] ?? null,
     ]);
 
     return (int) $pdo->lastInsertId();

@@ -32,7 +32,13 @@ $activePage = basename($_SERVER['PHP_SELF']);
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                     <div class="user-pill">
-                        <span class="avatar-mini"><?php echo strtoupper(substr($user['nome'] ?? 'U', 0, 1)); ?></span>
+                        <span class="avatar-mini">
+                            <?php if ($avatarUrl = avatar_url($user['avatar'] ?? '')): ?>
+                                <img src="<?php echo e($avatarUrl); ?>" alt="Foto de perfil">
+                            <?php else: ?>
+                                <?php echo strtoupper(substr($user['nome'] ?? 'U', 0, 1)); ?>
+                            <?php endif; ?>
+                        </span>
                         <span><?php echo e($user['nome'] ?? 'Usuário'); ?></span>
                     </div>
                     <a href="/igor_tcc_teste/public/logout.php" class="btn btn-outline-light btn-sm">🚪 Sair</a>

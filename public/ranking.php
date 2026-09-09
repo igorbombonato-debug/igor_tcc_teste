@@ -40,7 +40,15 @@ $rankAno = $anoFiltro ? obter_ranking_por_ano($anoFiltro, 10) : $rankGeral;
                 <?php foreach ($rankAno as $index => $aluno): ?>
                     <tr>
                         <td><?php echo $index + 1; ?>º</td>
-                        <td><span class="avatar-circle"><?php echo strtoupper(substr($aluno['nome'], 0, 1)); ?></span></td>
+                        <td>
+                            <span class="avatar-circle">
+                                <?php if ($avatarUrl = avatar_url($aluno['avatar'] ?? '')): ?>
+                                    <img src="<?php echo e($avatarUrl); ?>" alt="Foto de <?php echo e($aluno['nome']); ?>">
+                                <?php else: ?>
+                                    <?php echo strtoupper(substr($aluno['nome'], 0, 1)); ?>
+                                <?php endif; ?>
+                            </span>
+                        </td>
                         <td><?php echo e($aluno['nome']); ?></td>
                         <td><?php echo (int) $aluno['ano_escolar']; ?>º</td>
                         <td><?php echo (int) $aluno['pontos']; ?></td>

@@ -1,32 +1,43 @@
 <?php
+// Carrega autenticação, sessão e funções de banco.
 require_once __DIR__ . '/../includes/auth.php';
 
+// Usuários já logados são enviados diretamente ao dashboard.
 redirect_if_logged_in();
 
+// Define o título da página e inicia a mensagem de erro.
 $pageTitle = 'Login | MathPlay';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Lê e limpa os dados enviados pelo formulário.
     $login = trim($_POST['login'] ?? '');
     $senha = $_POST['senha'] ?? '';
 
     if ($login === '' || $senha === '') {
+        // Impede consulta quando algum campo obrigatório está vazio.
         $error = 'Informe seu e-mail ou usuário e sua senha.';
     } else {
+        // Decide se a busca será feita por e-mail ou username.
         $user = str_contains($login, '@')
             ? buscar_usuario_por_email($login)
             : buscar_usuario_por_username($login);
         if ($user && password_verify($senha, $user['senha'])) {
+            // A senha é comparada com o hash armazenado no banco.
             if ((int) $user['ativo'] !== 1) {
+                // Contas desativadas não podem iniciar sessão.
                 $error = 'Sua conta está inativa. Contate o administrador.';
             } else {
+                // Salva na sessão os dados necessários para as páginas privadas.
                 $_SESSION['user_id'] = (int) $user['id'];
                 $_SESSION['user_tipo'] = $user['tipo'];
                 $_SESSION['user_nome'] = $user['nome'];
+                // Envia o usuário autenticado para o dashboard.
                 header('Location: /igor_tcc_teste/public/dashboard.php');
                 exit;
             }
         } else {
+            // Não revela se o erro foi no usuário ou na senha.
             $error = 'Credenciais inválidas.';
         }
     }

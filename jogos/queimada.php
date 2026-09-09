@@ -1,7 +1,9 @@
 <?php
+// Carrega autenticação e funções necessárias para iniciar o jogo.
 require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
+// Obtém o aluno, o ano, a dificuldade e a matéria escolhida.
 $user = get_logged_user();
 $pageTitle = 'Queimada Matemática | MathPlay';
 
@@ -9,6 +11,7 @@ $ano = (int) ($user['ano_escolar'] ?? 6);
 $dificuldade = $_GET['dificuldade'] ?? 'Médio';
 $materiaId = (int) ($_GET['materia_id'] ?? 0);
 
+// Busca questões da matéria antes de completar as dez rodadas.
 $questoes = obter_questoes_por_ano($ano, $dificuldade, $materiaId ?: null);
 if (empty($questoes)) {
     $questoes = obter_questoes_por_ano($ano);
@@ -84,7 +87,7 @@ if ($questaoAtual) {
             <div class="hud-item"><span>XP</span><strong id="xp">0</strong></div>
             <div class="hud-item"><span>Vidas</span><strong id="vidas">3</strong></div>
             <div class="hud-item"><span>Questão</span><strong id="questaoAtual">1</strong></div>
-            <div class="hud-item"><span>Cronômetro</span><strong id="tempo">20</strong>s</div>
+            <div class="hud-item"><span>Cronômetro</span><strong id="tempo">60</strong>s</div>
             <div class="hud-item"><span>Progresso</span><strong id="progresso">0%</strong></div>
         </div>
 
@@ -127,32 +130,37 @@ if ($questaoAtual) {
 </div>
 
 <script>
+    // Envia as questões PHP para o JavaScript controlar a partida.
     const questoes = <?php echo json_encode($questoes, JSON_UNESCAPED_UNICODE); ?>;
     const userId = <?php echo (int) $user['id']; ?>;
     const anoEscolar = <?php echo (int) $user['ano_escolar']; ?>;
     const materiaId = <?php echo (int) ($materiaId ?: 0); ?>;
     const dificuldade = <?php echo json_encode($dificuldade); ?>;
+    // Estado acumulado da partida.
     let indice = 0;
     let pontos = 0;
     let xp = 0;
     let vidas = 3;
     let acertos = 0;
     let erros = 0;
-    let tempo = 20;
+    let tempo = 60;
     let timer = null;
     let combo = 0;
     let turnLocked = false;
         let partidaFinalizada = false;
         const registrosPendentes = [];
         const pontosTimes = { azul: 0, vermelho: 0 };
+    // A primeira rodada começa no Time Azul e alterna após cada resposta.
     let timeDaVez = 'azul';
     const jogadoresEliminados = new Set();
     let times = { azul: [], vermelho: [] };
     let jogadorDaVez = null;
+    // Embaralha os nomes antes de dividir os times.
     function embaralhar(lista) {
         return [...lista].sort(() => Math.random() - 0.5);
     }
 
+    // Valida e coleta os oito nomes digitados na tela inicial.
     function obterNomesJogadores() {
         const nomes = [...document.querySelectorAll('.nome-jogador-input')]
             .map(input => input.value.trim())
@@ -172,6 +180,7 @@ if ($questaoAtual) {
         return div.innerHTML;
     }
 
+    // Divide os nomes informados em dois grupos de quatro jogadores.
     function montarTimes() {
         const nomes = obterNomesJogadores();
         if (!nomes) return false;
@@ -184,6 +193,7 @@ if ($questaoAtual) {
         return true;
     }
 
+    // Desenha os jogadores e associa uma alternativa a cada um.
     function renderizarTimes() {
         const respostas = questoes[indice] ? { A: questoes[indice].alternativa_a, B: questoes[indice].alternativa_b, C: questoes[indice].alternativa_c, D: questoes[indice].alternativa_d } : {};
         const letras = ['A', 'B', 'C', 'D'];
@@ -197,6 +207,7 @@ if ($questaoAtual) {
         document.querySelectorAll('.personagem').forEach(personagem => personagem.addEventListener('click', responderComJogador));
     }
 
+    // Libera todos os jogadores vivos somente do time ativo.
     function prepararJogadorDaVez() {
         const jogadoresDoTime = times[timeDaVez].map((_, index) => `${timeDaVez}-${index}`);
         const vivos = [...document.querySelectorAll('.personagem')].filter(jogador =>
@@ -214,6 +225,7 @@ if ($questaoAtual) {
         document.getElementById('turnIndicator').textContent = `Vez do Time ${timeDaVez === 'azul' ? 'Azul' : 'Vermelho'}: qualquer jogador do time pode responder.`;
     }
 
+    // Atualiza pontos, XP, vidas, rodada, tempo e progresso na interface.
     function atualizarHud() {
         document.getElementById('pontos').textContent = pontos;
         document.getElementById('xp').textContent = xp;
@@ -223,6 +235,7 @@ if ($questaoAtual) {
         document.getElementById('progresso').textContent = Math.round((indice / 10) * 100) + '%';
     }
 
+    // Exibe a próxima pergunta e inicia o cronômetro de um minuto.
     function mostrarQuestao() {
         if (indice >= questoes.length) {
             finalizarJogo();
@@ -235,7 +248,7 @@ if ($questaoAtual) {
         prepararJogadorDaVez();
         document.getElementById('feedback').classList.add('hidden');
         document.getElementById('feedback').textContent = 'ACERTOU!';
-        tempo = q.dificuldade === 'Difícil' ? 15 : q.dificuldade === 'Médio' ? 18 : 20;
+        tempo = 60;
         atualizarHud();
         clearInterval(timer);
         timer = setInterval(() => {
@@ -249,10 +262,12 @@ if ($questaoAtual) {
         }, 1000);
     }
 
+    // Calcula o resultado local e envia a resposta para a API.
     function registrarResposta(respostaUsuario, correta) {
         const q = questoes[indice];
         if (!q || turnLocked) return;
         turnLocked = true;
+        const timeResposta = timeDaVez;
 
         const jogadorSelecionado = respostaUsuario.jogador
             ? document.querySelector(`.personagem[data-jogador="${CSS.escape(respostaUsuario.jogador)}"]`)
@@ -263,10 +278,11 @@ if ($questaoAtual) {
             const base = q.dificuldade === 'Difícil' ? 180 : q.dificuldade === 'Médio' ? 140 : 100;
             const bonus = combo * 50;
             pontos += base + bonus;
-                pontosTimes[timeDaVez] += base + bonus;
+                pontosTimes[timeResposta] += base + bonus;
             xp += q.dificuldade === 'Difícil' ? 30 : q.dificuldade === 'Médio' ? 20 : 15;
             document.getElementById('feedback').textContent = 'ACERTOU!';
             document.getElementById('feedback').classList.remove('hidden');
+            document.getElementById('feedback').classList.remove('error');
             document.getElementById('feedback').classList.add('success');
             jogadorSelecionado?.classList.add('acertou');
         } else {
@@ -275,6 +291,7 @@ if ($questaoAtual) {
             vidas -= 1;
             document.getElementById('feedback').textContent = 'QUASE!';
             document.getElementById('feedback').classList.remove('hidden');
+            document.getElementById('feedback').classList.remove('success');
             document.getElementById('feedback').classList.add('error');
             if (jogadorSelecionado) {
                 jogadoresEliminados.add(jogadorSelecionado.dataset.jogador);
@@ -303,9 +320,13 @@ if ($questaoAtual) {
             body: JSON.stringify({
                 usuario_id: userId,
                 questao_id: q.id,
+                // A primeira resposta da rodada zero inicia um novo registro de partida.
+                nova_partida: indice === 1,
                 resposta_usuario: respostaUsuario.resposta,
+                jogador_nome: respostaUsuario.jogador ? times[timeResposta][Number(respostaUsuario.jogador.split('-')[1])] : 'Tempo esgotado',
+                time_jogador: timeResposta,
                 correta: correta ? 1 : 0,
-                tempo_resposta: 20 - tempo,
+                tempo_resposta: 60 - tempo,
                 partida: {
                     jogo: 'queimada',
                     materia_id: q.materia_id,
@@ -324,6 +345,7 @@ if ($questaoAtual) {
         registrosPendentes.push(registro);
     }
 
+    // Mostra o vencedor e envia os totais finais ao ranking.
     function finalizarJogo() {
         if (partidaFinalizada) return;
         partidaFinalizada = true;
@@ -357,6 +379,7 @@ if ($questaoAtual) {
                 erros,
                 total_questoes: 10,
                 tempo: 0,
+                equipe_nomes: times,
                 ano_escolar: anoEscolar
             })
         })).catch(() => {});
