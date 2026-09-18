@@ -2,6 +2,7 @@
 CREATE DATABASE IF NOT EXISTS mathplay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- Seleciona o banco que receberá as tabelas abaixo.
 USE mathplay;
+SET NAMES utf8mb4;
 
 -- Remove tabelas antigas para permitir uma instalação limpa.
 DROP TABLE IF EXISTS usuario_conquistas;
