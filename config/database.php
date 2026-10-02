@@ -2,13 +2,13 @@
 
 // Endereço local usado pelo MySQL.
 $host = '127.0.0.1';
-// Porta configurada pelo MySQL do XAMPP que atende o site local.
-$port = 3307;
+// Porta padrão do MySQL no Laragon.
+$port = 3306;
 // Nome do banco de dados da aplicação.
 $dbname = 'mathplay';
 // Usuário local do MySQL.
 $dbUser = 'root';
-// Senha do usuário local.
+// Informe aqui a senha configurada para o usuário local do MySQL.
 $dbPass = '';
 
 // Opções que deixam o PDO seguro e retornam resultados como arrays associativos.
