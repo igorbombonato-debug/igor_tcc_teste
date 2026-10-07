@@ -1,13 +1,20 @@
 <?php
+// Página inicial dos jogos: mostra as opções disponíveis para o aluno autenticado.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
-$pageTitle = 'Jogos | MathPlay';
+$pageTitle = 'Jogos | Mathematics Education';
 $user = get_logged_user();
-$materiaId = (int) ($_GET['materia_id'] ?? 0);
+// Mantém a matéria selecionada dentro das matérias válidas para a série do aluno.
 $materias = obter_materias($user['ano_escolar']);
+$materiaIds = array_map('intval', array_column($materias, 'id'));
+$materiaSolicitada = (int) ($_GET['materia_id'] ?? 0);
+$materiaId = in_array($materiaSolicitada, $materiaIds, true)
+    ? $materiaSolicitada
+    : (int) ($materiaIds[0] ?? 0);
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
+<!-- Cartões de acesso aos jogos e lista de conteúdos disponíveis nesta série. -->
 <section class="container page-section">
     <div class="mb-4">
         <span class="section-badge">Jogos</span>

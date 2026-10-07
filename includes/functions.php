@@ -1,12 +1,15 @@
 <?php
 
+// Reúne funções reutilizadas pelas páginas, como consultas, cálculos e formatação.
 require_once __DIR__ . '/../config/database.php';
 
+// Escapa texto antes de inseri-lo em HTML, evitando que conteúdo vire código.
 function e(string $value): string
 {
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+// Aceita URLs externas ou caminhos de avatar dentro da pasta pública esperada.
 function avatar_url(?string $avatar): ?string
 {
     $avatar = trim((string) $avatar);
@@ -22,6 +25,7 @@ function avatar_url(?string $avatar): ?string
     return str_starts_with($avatar, '/igor_tcc_teste/assets/img/avatars/') ? $avatar : null;
 }
 
+// Calcula o nível considerando uma meta de 500 XP por nível.
 function get_nivel_por_xp(int $xp): int
 {
     $nivel = 1;
@@ -37,6 +41,7 @@ function get_nivel_por_xp(int $xp): int
     return $nivel;
 }
 
+// Informa quanto falta para alcançar a meta do próximo nível.
 function get_xp_proximo_nivel(int $xp): int
 {
     $nivel = get_nivel_por_xp($xp);
@@ -44,11 +49,13 @@ function get_xp_proximo_nivel(int $xp): int
     return max($meta - $xp, 0);
 }
 
+// Retorna o total de XP necessário para iniciar determinado nível.
 function get_nivel_threshold(int $nivel): int
 {
     return max(($nivel - 1) * 500, 0);
 }
 
+// Calcula o percentual sem dividir por zero quando não há questões respondidas.
 function calcular_percentual(int $acertos, int $total): int
 {
     if ($total <= 0) {
@@ -58,6 +65,7 @@ function calcular_percentual(int $acertos, int $total): int
     return (int) round(($acertos / $total) * 100);
 }
 
+// Converte o percentual em uma faixa de desempenho legível.
 function classificar_desempenho(float $percentual): string
 {
     if ($percentual >= 80) {
@@ -75,6 +83,7 @@ function classificar_desempenho(float $percentual): string
     return 'PRECISA DE ATENÇÃO';
 }
 
+// Busca matérias ativas, evitando repetir nomes dentro da mesma série.
 function obter_materias($ano = null): array
 {
     global $pdo;
@@ -89,6 +98,7 @@ function obter_materias($ano = null): array
             ) unicas ON unicas.id = m.id';
     $params = [];
 
+    // O filtro é opcional para permitir listar matérias de todas as séries.
     if ($ano !== null) {
         $sql .= ' AND ano_escolar = :ano';
         $params['ano'] = $ano;
@@ -101,6 +111,7 @@ function obter_materias($ano = null): array
     return $stmt->fetchAll();
 }
 
+// Carrega questões ativas da série e aplica filtros opcionais de dificuldade e matéria.
 function obter_questoes_por_ano($ano, $dificuldade = null, $materiaId = null): array
 {
     global $pdo;
@@ -108,6 +119,7 @@ function obter_questoes_por_ano($ano, $dificuldade = null, $materiaId = null): a
     $sql = 'SELECT * FROM questoes WHERE ativo = 1 AND ano_escolar = :ano';
     $params = ['ano' => $ano];
 
+    // Cada filtro acrescenta sua condição e parâmetro somente quando informado.
     if ($dificuldade) {
         $sql .= ' AND dificuldade = :dificuldade';
         $params['dificuldade'] = $dificuldade;
@@ -125,6 +137,7 @@ function obter_questoes_por_ano($ano, $dificuldade = null, $materiaId = null): a
     return $stmt->fetchAll();
 }
 
+// Localiza uma conta pelo e-mail; retorna null quando não houver correspondência.
 function buscar_usuario_por_email(string $email): ?array
 {
     global $pdo;
@@ -133,6 +146,7 @@ function buscar_usuario_por_email(string $email): ?array
     return $stmt->fetch() ?: null;
 }
 
+// Localiza uma conta pelo nome de usuário; retorna null quando não houver correspondência.
 function buscar_usuario_por_username(string $username): ?array
 {
     global $pdo;
@@ -141,6 +155,7 @@ function buscar_usuario_por_username(string $username): ?array
     return $stmt->fetch() ?: null;
 }
 
+// Registra uma partida concluída e devolve o ID gerado pelo banco.
 function registrar_partida(array $dados): int
 {
     global $pdo;
@@ -167,6 +182,7 @@ function registrar_partida(array $dados): int
     return (int) $pdo->lastInsertId();
 }
 
+// Atualiza XP e nível a partir do total acumulado após a partida.
 function atualizar_xp_e_nivel(int $usuarioId, int $xpGanho): void
 {
     global $pdo;
@@ -175,6 +191,7 @@ function atualizar_xp_e_nivel(int $usuarioId, int $xpGanho): void
     $usuario->execute(['id' => $usuarioId]);
     $dados = $usuario->fetch();
 
+    // A conta pode ter sido removida; nesse caso não há progresso para atualizar.
     if (!$dados) {
         return;
     }
@@ -190,6 +207,7 @@ function atualizar_xp_e_nivel(int $usuarioId, int $xpGanho): void
     ]);
 }
 
+// Soma pontos à pontuação atual do usuário.
 function atualizar_pontos(int $usuarioId, int $pontos): void
 {
     global $pdo;
@@ -197,6 +215,7 @@ function atualizar_pontos(int $usuarioId, int $pontos): void
     $stmt->execute(['pontos' => $pontos, 'id' => $usuarioId]);
 }
 
+// Acumula resultados por matéria, criando o registro na primeira partida.
 function atualizar_desempenho_usuario(int $usuarioId, int $materiaId, int $acertos, int $erros): void
 {
     global $pdo;
@@ -205,6 +224,7 @@ function atualizar_desempenho_usuario(int $usuarioId, int $materiaId, int $acert
     $stmt->execute(['usuario_id' => $usuarioId, 'materia_id' => $materiaId]);
     $registro = $stmt->fetch();
 
+    // Atualiza os totais existentes; se ainda não houver linha, cria uma abaixo.
     if ($registro) {
         $novasPartidas = (int) $registro['partidas'] + 1;
         $novosAcertos = (int) $registro['acertos'] + $acertos;
@@ -239,6 +259,7 @@ function atualizar_desempenho_usuario(int $usuarioId, int $materiaId, int $acert
     ]);
 }
 
+// Retorna os alunos ativos com maior pontuação, desempate por XP.
 function obter_ranking_geral(int $limit = 10): array
 {
     global $pdo;
@@ -248,6 +269,7 @@ function obter_ranking_geral(int $limit = 10): array
     return $stmt->fetchAll();
 }
 
+// Aplica o mesmo critério de classificação restrito a uma série.
 function obter_ranking_por_ano(int $ano, int $limit = 10): array
 {
     global $pdo;
@@ -258,6 +280,7 @@ function obter_ranking_por_ano(int $ano, int $limit = 10): array
     return $stmt->fetchAll();
 }
 
+// Busca o percentual de uma matéria para um aluno, ou zero sem histórico.
 function calcular_percentual_materia(int $usuarioId, int $materiaId): int
 {
     global $pdo;
@@ -267,6 +290,7 @@ function calcular_percentual_materia(int $usuarioId, int $materiaId): int
     return $row ? (int) $row['percentual'] : 0;
 }
 
+// Retorna os dados cadastrais resumidos de um usuário pelo ID.
 function get_usuario_resumo(int $usuarioId): array
 {
     global $pdo;
@@ -275,6 +299,7 @@ function get_usuario_resumo(int $usuarioId): array
     return $stmt->fetch();
 }
 
+// Obtém o nome da matéria ou usa "Geral" quando não há matéria associada.
 function get_materia_nome(int $materiaId): string
 {
     global $pdo;

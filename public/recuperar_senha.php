@@ -1,38 +1,58 @@
 <?php
+// Solicita um link temporário de redefinição sem revelar se um e-mail existe.
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/mailer.php';
 
 redirect_if_logged_in();
 
-$pageTitle = 'Recuperar senha | MathPlay';
+$pageTitle = 'Recuperar senha | Mathematics Education';
 $mensagem = '';
 $erro = '';
-$linkRecuperacao = '';
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
 
+    // Valida o formato antes de consultar as configurações de envio ou o banco.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $erro = 'Informe um e-mail válido.';
     } else {
-        $usuario = buscar_usuario_por_email($email);
+        try {
+            $mailConfig = mathplay_mail_configuration();
+        } catch (RuntimeException $error) {
+            $erro = $error->getMessage();
+        }
 
-        if ($usuario) {
-            $token = bin2hex(random_bytes(32));
-            $tokenHash = hash('sha256', $token);
+        if ($erro === '') {
+            $usuario = buscar_usuario_por_email($email);
 
-            $pdo->prepare('UPDATE recuperacao_senhas SET usado = 1 WHERE usuario_id = :usuario_id AND usado = 0')
-                ->execute(['usuario_id' => $usuario['id']]);
+            if ($usuario) {
+                // O link contém o token original; no banco fica apenas o hash SHA-256.
+                $token = bin2hex(random_bytes(32));
+                $tokenHash = hash('sha256', $token);
 
-            $stmt = $pdo->prepare('INSERT INTO recuperacao_senhas (usuario_id, token_hash, expira_em) VALUES (:usuario_id, :token_hash, DATE_ADD(NOW(), INTERVAL 1 HOUR))');
-            $stmt->execute([
-                'usuario_id' => $usuario['id'],
-                'token_hash' => $tokenHash,
-            ]);
+                // Invalida links anteriores e grava o novo token como uma operação única.
+                $pdo->beginTransaction();
+                $pdo->prepare('UPDATE recuperacao_senhas SET usado = 1 WHERE usuario_id = :usuario_id AND usado = 0')
+                    ->execute(['usuario_id' => $usuario['id']]);
 
-            $linkRecuperacao = '/igor_tcc_teste/public/redefinir_senha.php?token=' . rawurlencode($token);
-            $mensagem = 'Link de recuperação criado. Ele é válido por 1 hora.';
-        } else {
-            $mensagem = 'Se o e-mail estiver cadastrado, um link de recuperação será disponibilizado.';
+                $stmt = $pdo->prepare('INSERT INTO recuperacao_senhas (usuario_id, token_hash, expira_em) VALUES (:usuario_id, :token_hash, DATE_ADD(NOW(), INTERVAL 1 HOUR))');
+                $stmt->execute([
+                    'usuario_id' => $usuario['id'],
+                    'token_hash' => $tokenHash,
+                ]);
+
+                $recoveryUrl = $mailConfig['base_url'] . '/public/redefinir_senha.php?token=' . rawurlencode($token);
+                try {
+                    send_password_recovery_email($email, $usuario['nome'], $recoveryUrl, $mailConfig);
+                    $pdo->commit();
+                    $mensagem = 'Se o e-mail estiver cadastrado, você receberá um link de recuperação válido por 1 hora.';
+                } catch (RuntimeException $error) {
+                    $pdo->rollBack();
+                    $erro = $error->getMessage();
+                }
+            } else {
+                // Usa a mesma resposta para não permitir descobrir contas cadastradas.
+                $mensagem = 'Se o e-mail estiver cadastrado, você receberá um link de recuperação válido por 1 hora.';
+            }
         }
     }
 }
@@ -50,18 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <section class="recovery-card">
         <span class="section-badge">Acesso seguro</span>
         <h1 class="mt-3 mb-2">Recuperar senha</h1>
-        <p class="text-muted">Informe o e-mail cadastrado para criar um link de redefinição.</p>
+        <p class="text-muted">Informe o e-mail cadastrado. Enviaremos um link seguro para redefinir sua senha.</p>
 
         <?php if ($erro): ?><div class="alert alert-danger"><?php echo e($erro); ?></div><?php endif; ?>
         <?php if ($mensagem): ?><div class="alert alert-success"><?php echo e($mensagem); ?></div><?php endif; ?>
-        <?php if ($linkRecuperacao): ?>
-            <a class="recovery-link" href="<?php echo e($linkRecuperacao); ?>">Abrir redefinição de senha</a>
-        <?php endif; ?>
 
         <form method="POST" class="mt-4">
             <label class="form-label" for="email">E-mail</label>
             <input id="email" type="email" name="email" class="form-control" required autocomplete="email">
-            <button class="btn btn-primary w-100 mt-3">Gerar link de recuperação</button>
+            <button class="btn btn-primary w-100 mt-3">Enviar link de recuperação</button>
         </form>
         <a href="/igor_tcc_teste/public/login.php" class="btn btn-link w-100 mt-2">Voltar ao login</a>
     </section>

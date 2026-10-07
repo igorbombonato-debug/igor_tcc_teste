@@ -1,5 +1,6 @@
 <?php
 
+// Centraliza a inicialização da sessão e as verificações de acesso por perfil.
 // Inicia uma sessão somente quando ainda não existe uma ativa.
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -37,11 +38,39 @@ function require_admin(): void
     }
 }
 
+function require_professor(): void
+{
+    // Confere o perfil usando os dados atuais da conta, não apenas um link acessado.
+    require_login();
+
+    $user = get_logged_user();
+    if (!$user || $user['tipo'] !== 'professor') {
+        header('Location: /igor_tcc_teste/public/dashboard.php');
+        exit;
+    }
+}
+
+function require_student(): void
+{
+    // Restringe a área de aluno a quem não tem perfil de professor.
+    require_login();
+
+    $user = get_logged_user();
+    if ($user && $user['tipo'] === 'professor') {
+        header('Location: /igor_tcc_teste/professor/index.php');
+        exit;
+    }
+}
+
 function redirect_if_logged_in(): void
 {
     // Impede que um usuário autenticado volte para login ou cadastro.
-    if (is_logged_in() && get_logged_user() !== null) {
-        header('Location: /igor_tcc_teste/public/dashboard.php');
+    $user = is_logged_in() ? get_logged_user() : null;
+    if ($user !== null) {
+        $destino = $user['tipo'] === 'professor'
+            ? '/igor_tcc_teste/professor/index.php'
+            : '/igor_tcc_teste/public/dashboard.php';
+        header('Location: ' . $destino);
         exit;
     }
 

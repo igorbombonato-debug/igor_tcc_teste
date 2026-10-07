@@ -1,13 +1,15 @@
 <?php
+// Esta página valida os dados e cria uma conta de aluno.
 require_once __DIR__ . '/../includes/auth.php';
 
 redirect_if_logged_in();
 
-$pageTitle = 'Cadastro | MathPlay';
+$pageTitle = 'Cadastro | Mathematics Education';
 $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Normaliza os campos de texto e aplica valores padrão aos dados opcionais.
     $nome = trim($_POST['nome'] ?? '');
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -15,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirmar = $_POST['confirmar_senha'] ?? '';
     $ano = (int) ($_POST['ano_escolar'] ?? 6);
 
+    // As validações em sequência interrompem o cadastro no primeiro problema encontrado.
     if ($nome === '' || $username === '' || $email === '' || $senha === '' || $confirmar === '') {
         $error = 'Todos os campos são obrigatórios.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -28,8 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (buscar_usuario_por_username($username)) {
         $error = 'Este username já existe.';
     } else {
+        // Nunca armazena a senha em texto puro: salva somente o hash seguro.
         $hash = password_hash($senha, PASSWORD_DEFAULT);
 
+        // Parâmetros nomeados separam os valores enviados dos comandos SQL.
         $stmt = $pdo->prepare('INSERT INTO usuarios (nome, username, email, senha, tipo, ano_escolar, xp, nivel, pontos, ativo, created_at) VALUES (:nome, :username, :email, :senha, :tipo, :ano, 0, 1, 0, 1, NOW())');
         $stmt->execute([
             'nome' => $nome,
@@ -40,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'ano' => $ano,
         ]);
 
+        // Após criar a conta, direciona para o login em vez de iniciar sessão automaticamente.
         $success = 'Cadastro realizado com sucesso!';
         header('Location: /igor_tcc_teste/public/login.php?cadastro=1');
         exit;

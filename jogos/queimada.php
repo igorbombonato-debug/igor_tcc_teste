@@ -1,24 +1,32 @@
 <?php
+// Prepara a partida de equipes e fornece perguntas da série do aluno ao navegador.
 // Carrega autenticação e funções necessárias para iniciar o jogo.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
 // Obtém o aluno, o ano, a dificuldade e a matéria escolhida.
 $user = get_logged_user();
-$pageTitle = 'Queimada Matemática | MathPlay';
+$pageTitle = 'Queimada Matemática | Mathematics Education';
 
 $ano = (int) ($user['ano_escolar'] ?? 6);
 $dificuldade = $_GET['dificuldade'] ?? 'Médio';
-$materiaId = (int) ($_GET['materia_id'] ?? 0);
+$materias = obter_materias($ano);
+$materiaIds = array_map('intval', array_column($materias, 'id'));
+$materiaSolicitada = (int) ($_GET['materia_id'] ?? 0);
+$materiaId = in_array($materiaSolicitada, $materiaIds, true)
+    ? $materiaSolicitada
+    : (int) ($materiaIds[0] ?? 0);
 
 // Busca questões da matéria antes de completar as dez rodadas.
 $questoes = obter_questoes_por_ano($ano, $dificuldade, $materiaId ?: null);
 if (empty($questoes)) {
+    // Se a matéria ainda não tiver perguntas, usa qualquer pergunta da mesma série.
     $questoes = obter_questoes_por_ano($ano);
 }
 
 // Garante dez rodadas, usando questões do mesmo ano se a matéria tiver poucas.
 if (count($questoes) < 10) {
+    // Completa o conjunto com perguntas de outras matérias, sem repetir IDs.
     $questoesPorAno = obter_questoes_por_ano($ano, $dificuldade);
     $idsExistentes = array_column($questoes, 'id');
     foreach ($questoesPorAno as $questao) {
@@ -33,6 +41,7 @@ if (count($questoes) < 10) {
 }
 
 if (count($questoes) < 10) {
+    // Se ainda faltar quantidade, completa com perguntas de qualquer dificuldade.
     $questoesPorAno = obter_questoes_por_ano($ano);
     $idsExistentes = array_column($questoes, 'id');
     foreach ($questoesPorAno as $questao) {
@@ -60,7 +69,8 @@ if ($questaoAtual) {
 }
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=5">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=8">
+<!-- Os nomes são coletados antes de mostrar a área de perguntas da partida. -->
 <div class="game-shell">
         <section class="team-setup card-glass" id="teamSetup">
             <div class="setup-copy">
@@ -93,7 +103,7 @@ if ($questaoAtual) {
 
         <div class="game-area card-glass">
             <div class="question-box">
-                <div id="feedback" class="feedback-box hidden">ACERTOU!</div>
+                <div id="feedback" class="feedback-box hidden" role="status" aria-live="assertive"></div>
                 <h2 id="enunciado"><?php echo e($questaoAtual['enunciado'] ?? 'Carregando pergunta...'); ?></h2>
             </div>
 
@@ -126,7 +136,8 @@ if ($questaoAtual) {
             </div>
         </div>
 
-        <div id="gameOver" class="game-over hidden">
+        <div id="gameOver" class="game-over-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="resultadoTitulo" tabindex="-1">
+            <section class="game-over">
                 <h2 id="resultadoTitulo">Fim da partida</h2>
                 <div class="winner-box"><span>Vencedor</span><strong id="vencedor">-</strong></div>
                 <div class="team-scoreboard">
@@ -136,10 +147,12 @@ if ($questaoAtual) {
             <p>Pontuação: <strong id="finalPontos">0</strong></p>
             <p>Acertos: <strong id="finalAcertos">0</strong></p>
             <p>Erros: <strong id="finalErros">0</strong></p>
+            <p id="salvamentoStatus" class="alert alert-warning hidden" role="status"></p>
             <div class="d-flex gap-3 justify-content-center flex-wrap">
                 <a href="/igor_tcc_teste/jogos/queimada.php" class="btn btn-primary">JOGAR NOVAMENTE</a>
                 <a href="/igor_tcc_teste/public/dashboard.php" class="btn btn-outline-primary">VOLTAR AO MENU</a>
             </div>
+            </section>
         </div>
     </div>
 </div>
@@ -147,9 +160,8 @@ if ($questaoAtual) {
 <script>
     // Envia as questões PHP para o JavaScript controlar a partida.
     const questoes = <?php echo json_encode($questoes, JSON_UNESCAPED_UNICODE); ?>;
-    const userId = <?php echo (int) $user['id']; ?>;
     const anoEscolar = <?php echo (int) $user['ano_escolar']; ?>;
-    const materiaId = <?php echo (int) ($materiaId ?: 0); ?>;
+    const materiaId = <?php echo $materiaId; ?>;
     const dificuldade = <?php echo json_encode($dificuldade); ?>;
     // Estado acumulado da partida.
     let indice = 0;
@@ -191,6 +203,7 @@ if ($questaoAtual) {
     }
 
     function escaparHtml(texto) {
+        // Converte os nomes inseridos em texto seguro antes de montar HTML dinâmico.
         const div = document.createElement('div');
         div.textContent = texto;
         return div.innerHTML;
@@ -261,7 +274,8 @@ if ($questaoAtual) {
         document.getElementById('respostaInput').value = '';
         document.getElementById('respostaInput').focus();
         document.getElementById('feedback').classList.add('hidden');
-        document.getElementById('feedback').textContent = 'ACERTOU!';
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').classList.remove('success', 'error');
         tempo = 60;
         atualizarHud();
         clearInterval(timer);
@@ -280,6 +294,8 @@ if ($questaoAtual) {
     function registrarResposta(respostaUsuario, correta) {
         const q = questoes[indice];
         if (!q || turnLocked) return;
+        const alternativas = { A: q.alternativa_a, B: q.alternativa_b, C: q.alternativa_c, D: q.alternativa_d };
+        const letraCorreta = q.resposta_correta.toUpperCase();
         turnLocked = true;
         const timeResposta = timeDaVez;
 
@@ -287,6 +303,7 @@ if ($questaoAtual) {
             ? document.querySelector(`.personagem[data-jogador="${CSS.escape(respostaUsuario.jogador)}"]`)
             : null;
         if (correta) {
+            // O valor base depende da dificuldade; a sequência de acertos acrescenta bônus.
             combo += 1;
             acertos += 1;
             const base = q.dificuldade === 'Difícil' ? 180 : q.dificuldade === 'Médio' ? 140 : 100;
@@ -294,15 +311,19 @@ if ($questaoAtual) {
             pontos += base + bonus;
                 pontosTimes[timeResposta] += base + bonus;
             xp += q.dificuldade === 'Difícil' ? 30 : q.dificuldade === 'Médio' ? 20 : 15;
-            document.getElementById('feedback').textContent = 'ACERTOU!';
+            document.getElementById('feedback').innerHTML = '<span class="feedback-icon" aria-hidden="true">✓</span><span><strong>RESPOSTA CORRETA!</strong><small>Excelente! Continue assim.</small></span>';
             document.getElementById('feedback').classList.remove('hidden');
             document.getElementById('feedback').classList.remove('error');
             document.getElementById('feedback').classList.add('success');
             jogadorSelecionado?.classList.add('acertou');
         } else {
+            // Uma resposta errada elimina o jogador sorteado para esta rodada.
             combo = 0;
             erros += 1;
-            document.getElementById('feedback').textContent = 'QUASE!';
+            const textoResposta = respostaUsuario.resposta
+                ? `Resposta certa: ${letraCorreta}. ${alternativas[letraCorreta]}`
+                : `Tempo esgotado! Resposta certa: ${letraCorreta}. ${alternativas[letraCorreta]}`;
+            document.getElementById('feedback').innerHTML = `<span class="feedback-icon" aria-hidden="true">✕</span><span><strong>RESPOSTA INCORRETA</strong><small>${escaparHtml(textoResposta)}</small></span>`;
             document.getElementById('feedback').classList.remove('hidden');
             document.getElementById('feedback').classList.remove('success');
             document.getElementById('feedback').classList.add('error');
@@ -331,11 +352,12 @@ if ($questaoAtual) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                usuario_id: userId,
                 questao_id: q.id,
                 // A primeira resposta da rodada zero inicia um novo registro de partida.
                 nova_partida: indice === 1,
                 resposta_usuario: respostaUsuario.resposta,
+                questao_enunciado: q.enunciado,
+                resposta_correta: `${letraCorreta}. ${alternativas[letraCorreta]}`,
                 jogador_nome: jogadorDaVezNome || 'Tempo esgotado',
                 time_jogador: timeResposta,
                 correta: correta ? 1 : 0,
@@ -354,7 +376,11 @@ if ($questaoAtual) {
                     materia_nome: 'Geral'
                 }
             })
-        }).catch(() => {});
+        }).then(async response => {
+            if (!response.ok) throw new Error('Falha ao salvar uma resposta.');
+            const resultado = await response.json();
+            if (!resultado.success) throw new Error(resultado.message || 'Falha ao salvar uma resposta.');
+        });
         registrosPendentes.push(registro);
     }
 
@@ -365,7 +391,12 @@ if ($questaoAtual) {
         clearInterval(timer);
         const totalPontos = pontos;
         const totalXp = xp;
-        document.getElementById('gameOver').classList.remove('hidden');
+        const resultadoModal = document.getElementById('gameOver');
+        const resultadoCartao = resultadoModal.querySelector('.game-over');
+        resultadoModal.classList.remove('hidden');
+        document.body.classList.add('game-result-open');
+        resultadoCartao.scrollTop = 0;
+        resultadoModal.focus({ preventScroll: true });
         const vencedor = timeEliminadoFinal
             ? (timeEliminadoFinal === 'azul' ? 'Time Vermelho' : 'Time Azul')
             : pontosTimes.azul === pontosTimes.vermelho
@@ -379,28 +410,45 @@ if ($questaoAtual) {
         document.getElementById('finalAcertos').textContent = acertos;
         document.getElementById('finalErros').textContent = erros;
 
-        Promise.all(registrosPendentes).then(() => fetch('/igor_tcc_teste/api/registrar_resposta.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                usuario_id: userId,
-                finalizar: true,
-                jogo: 'queimada',
-                materia_id: materiaId || 1,
-                dificuldade,
-                pontuacao: totalPontos,
-                xp_ganho: totalXp,
-                acertos,
-                erros,
-                total_questoes: 10,
-                tempo: 0,
-                equipe_nomes: times,
-                ano_escolar: anoEscolar
+        // Aguarda todos os envios de respostas antes de salvar o resumo final da partida.
+        Promise.allSettled(registrosPendentes)
+            .then(() => fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    finalizar: true,
+                    jogo: 'queimada',
+                    materia_id: materiaId,
+                    dificuldade,
+                    pontuacao: totalPontos,
+                    xp_ganho: totalXp,
+                    acertos,
+                    erros,
+                    total_questoes: 10,
+                    tempo: 0,
+                    equipe_nomes: times,
+                    ano_escolar: anoEscolar
+                })
+            }))
+            .then(async response => {
+                if (!response.ok) throw new Error('Falha ao salvar o resultado da partida.');
+                const resultado = await response.json();
+                if (!resultado.success) throw new Error(resultado.message || 'Falha ao salvar o resultado da partida.');
+                const respostasComErro = registrosPendentes.length > 0
+                    && (await Promise.allSettled(registrosPendentes)).some(item => item.status === 'rejected');
+                if (respostasComErro) {
+                    throw new Error('O resultado foi salvo, mas algumas respostas não puderam ser registradas.');
+                }
             })
-        })).catch(() => {});
+            .catch(error => {
+                const status = document.getElementById('salvamentoStatus');
+                status.textContent = error.message;
+                status.classList.remove('hidden');
+            });
     }
 
     function normalizarResposta(valor) {
+        // Ignora diferenças de maiúsculas, acentos e espaços nas respostas digitadas.
         return valor.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
@@ -431,6 +479,7 @@ if ($questaoAtual) {
     });
     document.getElementById('answerForm').addEventListener('submit', responderComJogador);
 
+    // A área do jogo só aparece depois de os oito nomes formarem os dois times.
     document.querySelector('.game-area').classList.add('d-none');
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

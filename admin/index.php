@@ -1,8 +1,11 @@
 <?php
+// Exibe os principais indicadores gerais para a administração.
+// A verificação impede que perfis sem permissão acessem este painel.
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-$pageTitle = 'Admin | MathPlay';
+$pageTitle = 'Admin | Mathematics Education';
+// Cada consulta resume uma métrica usada nos cartões do painel.
 $stats = [
     'usuarios' => $pdo->query('SELECT COUNT(*) as total FROM usuarios WHERE tipo = "aluno"')->fetch()['total'],
     'questoes' => $pdo->query('SELECT COUNT(*) as total FROM questoes')->fetch()['total'],

@@ -1,4 +1,6 @@
 <?php
+// Registra respostas durante a partida ou grava seu resultado final.
+// Associa os dados ao usuário autenticado na sessão e responde em JSON.
 // Informa ao navegador que esta API sempre responde em JSON UTF-8.
 header('Content-Type: application/json; charset=utf-8');
 
@@ -21,10 +23,19 @@ if (!is_array($data)) {
 // Dados de partida podem vir agrupados no campo partida.
 $partida = isset($data['partida']) && is_array($data['partida']) ? $data['partida'] : [];
 
-// Usa o usuário enviado ou, como fallback, o usuário da sessão.
-$usuarioId = isset($data['usuario_id']) ? (int) $data['usuario_id'] : (int) ($_SESSION['user_id'] ?? 0);
+// Usa exclusivamente o usuário autenticado na sessão para associar resultados.
+$usuarioId = (int) ($_SESSION['user_id'] ?? 0);
 if ($usuarioId <= 0) {
+    http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Usuário não autenticado.']);
+    exit;
+}
+
+$stmt = $pdo->prepare('SELECT id FROM usuarios WHERE id = :id AND tipo IN (\'aluno\', \'admin\') AND ativo = 1 LIMIT 1');
+$stmt->execute(['id' => $usuarioId]);
+if (!$stmt->fetch()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Este perfil não pode registrar resultados de jogos.']);
     exit;
 }
 
@@ -33,6 +44,8 @@ $materiaId = (int) ($data['materia_id'] ?? $partida['materia_id'] ?? 1);
 $materiaId = $materiaId > 0 ? $materiaId : 1;
 $questaoId = isset($data['questao_id']) ? (int) $data['questao_id'] : 0;
 $respostaUsuario = isset($data['resposta_usuario']) ? strtoupper((string) $data['resposta_usuario']) : null;
+$respostaCorreta = isset($data['resposta_correta']) ? trim((string) $data['resposta_correta']) : null;
+$enunciadoSnapshot = isset($data['questao_enunciado']) ? trim((string) $data['questao_enunciado']) : null;
 $jogadorNome = isset($data['jogador_nome']) ? trim((string) $data['jogador_nome']) : null;
 $timeJogador = isset($data['time_jogador']) && in_array($data['time_jogador'], ['azul', 'vermelho'], true) ? $data['time_jogador'] : null;
 $correta = isset($data['correta']) ? (int) $data['correta'] : 0;
@@ -93,6 +106,25 @@ if ($finalizar) {
         ]);
     }
 
+    // A Memória envia tentativas sem questão vinculada; preserva os detalhes no histórico.
+    $respostasDetalhadas = $data['respostas'] ?? [];
+    if (is_array($respostasDetalhadas)) {
+        $stmtResposta = $pdo->prepare('INSERT INTO respostas (partida_id, questao_id, resposta_usuario, enunciado_snapshot, resposta_correta, correta, tempo_resposta, created_at)
+            VALUES (:partida_id, NULL, :resposta_usuario, :enunciado, :resposta_correta, :correta, 0, NOW())');
+        foreach ($respostasDetalhadas as $resposta) {
+            if (!is_array($resposta)) {
+                continue;
+            }
+            $stmtResposta->execute([
+                'partida_id' => $partidaId,
+                'resposta_usuario' => mb_substr(trim((string) ($resposta['resposta_usuario'] ?? '')), 0, 255),
+                'enunciado' => trim((string) ($resposta['enunciado'] ?? '')),
+                'resposta_correta' => mb_substr(trim((string) ($resposta['resposta_correta'] ?? '')), 0, 255),
+                'correta' => !empty($resposta['correta']) ? 1 : 0,
+            ]);
+        }
+    }
+
     // Atualiza XP, nível, pontos e desempenho do aluno no fechamento.
     atualizar_xp_e_nivel($usuarioId, $xpGanho);
     atualizar_pontos($usuarioId, $pontuacao);
@@ -125,13 +157,15 @@ if ($partidaId <= 0) {
 
 if ($questaoId > 0) {
     // Guarda a questão, resposta, jogador e time que participaram da rodada.
-    $stmt = $pdo->prepare('INSERT INTO respostas (partida_id, questao_id, resposta_usuario, jogador_nome, time_jogador, correta, tempo_resposta, created_at) VALUES (:partida_id, :questao_id, :resposta_usuario, :jogador_nome, :time_jogador, :correta, :tempo_resposta, NOW())');
+    $stmt = $pdo->prepare('INSERT INTO respostas (partida_id, questao_id, resposta_usuario, jogador_nome, time_jogador, enunciado_snapshot, resposta_correta, correta, tempo_resposta, created_at) VALUES (:partida_id, :questao_id, :resposta_usuario, :jogador_nome, :time_jogador, :enunciado, :resposta_correta, :correta, :tempo_resposta, NOW())');
     $stmt->execute([
         'partida_id' => $partidaId,
         'questao_id' => $questaoId,
         'resposta_usuario' => $respostaUsuario,
         'jogador_nome' => $jogadorNome,
         'time_jogador' => $timeJogador,
+        'enunciado' => $enunciadoSnapshot,
+        'resposta_correta' => $respostaCorreta,
         'correta' => $correta,
         'tempo_resposta' => $tempoResposta,
     ]);

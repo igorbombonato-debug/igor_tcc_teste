@@ -1,16 +1,22 @@
 <?php
+// Tela do jogo individual de memória; os pares e as regras são controlados no JavaScript.
 // Carrega autenticação e funções compartilhadas do sistema.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
 // Define o aluno e a matéria associada à partida individual.
 $user = get_logged_user();
-$pageTitle = 'Memória Matemática | MathPlay';
+$pageTitle = 'Memória Matemática | Mathematics Education';
 $ano = (int) ($user['ano_escolar'] ?? 6);
-$materiaId = (int) ($_GET['materia_id'] ?? 1);
+$materias = obter_materias($ano);
+$materiaIds = array_map('intval', array_column($materias, 'id'));
+$materiaSolicitada = (int) ($_GET['materia_id'] ?? 0);
+$materiaId = in_array($materiaSolicitada, $materiaIds, true)
+    ? $materiaSolicitada
+    : (int) ($materiaIds[0] ?? 0);
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=7">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=8">
 <div class="memory-shell">
     <div class="container">
         <div class="memory-header card-glass">
@@ -45,9 +51,8 @@ $materiaId = (int) ($_GET['materia_id'] ?? 1);
 
 <script>
     // Identifica o aluno e a matéria no registro final da partida.
-    const userId = <?php echo (int) $user['id']; ?>;
     const anoEscolar = <?php echo (int) $user['ano_escolar']; ?>;
-    const materiaId = <?php echo $materiaId > 0 ? $materiaId : 1; ?>;
+    const materiaId = <?php echo $materiaId; ?>;
     const nomeUsuario = <?php echo json_encode($user['nome'], JSON_UNESCAPED_UNICODE); ?>;
     const cartasBase = [
         { id: 1, texto: '6 × 8', valor: '48' },
@@ -72,6 +77,7 @@ $materiaId = (int) ($_GET['materia_id'] ?? 1);
     let timer = null;
     let cartasEncontradas = 0;
     let partidaFinalizada = false;
+    const tentativas = [];
 
     // Embaralha as cartas sem alterar o conjunto original.
     function embaralhar(array) {
@@ -117,7 +123,18 @@ $materiaId = (int) ($_GET['materia_id'] ?? 1);
         movimentos += 1;
         atualizarHud();
 
-        if (primeiro.valor === segundo.valor) {
+        const textoPrimeiraCarta = primeiro.card.querySelector('.card-back').textContent;
+        const textoSegundaCarta = segundo.card.querySelector('.card-back').textContent;
+        // A comparação usa o resultado guardado na carta, não o texto que ela exibe.
+        const acertouPar = primeiro.valor === segundo.valor;
+        tentativas.push({
+            enunciado: `Encontre a carta com o mesmo resultado de: ${textoPrimeiraCarta}`,
+            resposta_usuario: textoSegundaCarta,
+            resposta_correta: `Uma carta com resultado ${primeiro.valor}`,
+            correta: acertouPar
+        });
+
+        if (acertouPar) {
             setTimeout(() => {
                 primeiro.card.classList.add('matched');
                 segundo.card.classList.add('matched');
@@ -174,11 +191,11 @@ $materiaId = (int) ($_GET['materia_id'] ?? 1);
         if (partidaFinalizada) return;
         partidaFinalizada = true;
         clearInterval(timer);
-        fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+        // A tela de resultado aparece imediatamente; o envio ao servidor termina em paralelo.
+        const registro = fetch('/igor_tcc_teste/api/registrar_resposta.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                usuario_id: userId,
                 finalizar: true,
                 nova_partida: true,
                 jogo: 'memoria',
@@ -191,15 +208,24 @@ $materiaId = (int) ($_GET['materia_id'] ?? 1);
                 total_questoes: cartasBase.length,
                 tempo: 300 - tempo,
                 ano_escolar: anoEscolar,
-                equipe_nomes: { tipo: 'individual', nomes: [nomeUsuario] }
+                equipe_nomes: { tipo: 'individual', nomes: [nomeUsuario] },
+                respostas: tentativas
             })
-        }).catch(() => {});
+        }).then(async response => {
+            if (!response.ok) throw new Error('Falha ao salvar a partida.');
+            const resultado = await response.json();
+            if (!resultado.success) throw new Error(resultado.message || 'Falha ao salvar a partida.');
+        });
         mostrarResultado(titulo, mensagem, [
             ['Pontuação', pontos],
             ['XP conquistado', xp],
             ['Movimentos', movimentos],
             ['Tempo usado', `${300 - tempo}s`]
         ], textoBotao);
+        registro.catch(() => {
+            document.getElementById('memoryResultMessage').textContent =
+                `${mensagem} Não foi possível salvar esta partida; atualize a página e tente novamente.`;
+        });
     }
 
     function mostrarResultado(titulo, mensagem, estatisticas, textoBotao) {

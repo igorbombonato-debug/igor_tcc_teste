@@ -1,11 +1,14 @@
 <?php
+// Mostra a classificação geral ou filtra os alunos por ano escolar.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
-$pageTitle = 'Ranking | MathPlay';
+$pageTitle = 'Ranking | Mathematics Education';
 $user = get_logged_user();
+// Converte o filtro recebido para inteiro antes de usá-lo nas consultas.
 $anoFiltro = isset($_GET['ano']) ? (int) $_GET['ano'] : 0;
 $rankGeral = obter_ranking_geral(10);
+// Sem ano selecionado, reaproveita a lista geral em vez de fazer outra consulta.
 $rankAno = $anoFiltro ? obter_ranking_por_ano($anoFiltro, 10) : $rankGeral;
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>

@@ -1,27 +1,35 @@
 <?php
+// Permite cadastrar, ativar/desativar, excluir e listar matérias.
+// Somente administradores podem executar essas ações.
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-$pageTitle = 'Matérias Admin | MathPlay';
+$pageTitle = 'Matérias Admin | Mathematics Education';
 
+// Os formulários enviam a ação por POST; após alterá-la, a página redireciona
+// para evitar que uma atualização do navegador repita a operação.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     $acao = $_POST['acao'];
     if ($acao === 'salvar') {
+        // Normaliza os campos recebidos antes de gravar uma nova matéria.
         $nome = trim($_POST['nome'] ?? '');
         $descricao = trim($_POST['descricao'] ?? '');
         $ano = (int) ($_POST['ano_escolar'] ?? 6);
         $icone = trim($_POST['icone'] ?? 'bi-book');
+        // O nome é obrigatório; sem ele, nenhuma matéria é inserida.
         if ($nome !== '') {
             $stmt = $pdo->prepare('INSERT INTO materias (nome, descricao, ano_escolar, icone, ativo, created_at) VALUES (:nome, :descricao, :ano, :icone, 1, NOW())');
             $stmt->execute(['nome' => $nome, 'descricao' => $descricao, 'ano' => $ano, 'icone' => $icone]);
         }
     }
     if ($acao === 'toggle') {
+        // Inverte o status atual sem precisar enviar seu valor do formulário.
         $id = (int) ($_POST['id'] ?? 0);
         $stmt = $pdo->prepare('UPDATE materias SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = :id');
         $stmt->execute(['id' => $id]);
     }
     if ($acao === 'excluir') {
+        // Remove a matéria identificada pelo formulário administrativo.
         $id = (int) ($_POST['id'] ?? 0);
         $stmt = $pdo->prepare('DELETE FROM materias WHERE id = :id');
         $stmt->execute(['id' => $id]);
@@ -30,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     exit;
 }
 
+// Mantém a lista organizada por série e, dentro dela, pelo nome.
 $materias = $pdo->query('SELECT * FROM materias ORDER BY ano_escolar, nome')->fetchAll();
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>

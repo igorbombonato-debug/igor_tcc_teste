@@ -1,24 +1,28 @@
 <?php
+// Permite ao aluno atualizar seus dados, foto de perfil e senha.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
-$pageTitle = 'Perfil | MathPlay';
+$pageTitle = 'Perfil | Mathematics Education';
 $user = get_logged_user();
 $profileError = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'])) {
+    // Atualiza os dados pessoais; a foto é opcional e só é movida após as verificações.
     $nome = trim($_POST['nome']);
     $username = trim($_POST['username']);
     $avatar = $user['avatar'] ?? '';
 
     if (!empty($_FILES['foto_perfil']['name'])) {
         $arquivo = $_FILES['foto_perfil'];
+        // Confere o tipo real da imagem e o tamanho, não apenas a extensão informada.
         $tiposPermitidos = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
         $tipo = $arquivo['tmp_name'] ? (getimagesize($arquivo['tmp_name'])['mime'] ?? '') : '';
 
         if ($arquivo['error'] !== UPLOAD_ERR_OK || $arquivo['size'] > 5 * 1024 * 1024 || !isset($tiposPermitidos[$tipo])) {
             $profileError = 'Envie uma imagem JPG, PNG, WEBP ou GIF de até 5 MB.';
         } else {
+            // Nome aleatório evita colisões e não reutiliza o nome enviado pelo navegador.
             $nomeArquivo = bin2hex(random_bytes(16)) . '.' . $tiposPermitidos[$tipo];
             $diretorio = __DIR__ . '/../assets/img/avatars/';
             if (move_uploaded_file($arquivo['tmp_name'], $diretorio . $nomeArquivo)) {
@@ -30,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'])) {
     }
 
     if ($profileError === '') {
+        // Salva somente se o processamento da foto não encontrou erro.
         $stmt = $pdo->prepare('UPDATE usuarios SET nome = :nome, username = :username, avatar = :avatar WHERE id = :id');
         $stmt->execute(['nome' => $nome, 'username' => $username, 'avatar' => $avatar, 'id' => $user['id']]);
         $user = get_logged_user();
@@ -37,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nova_senha'])) {
+    // Exige senha mínima e confirmação idêntica antes de substituir o hash atual.
     $novaSenha = $_POST['nova_senha'];
     $confirmacao = $_POST['confirmar_senha'];
     if ($novaSenha !== '' && strlen($novaSenha) >= 6 && $novaSenha === $confirmacao) {

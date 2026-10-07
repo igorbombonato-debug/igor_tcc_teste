@@ -1,11 +1,15 @@
 <?php
+// Lista as contas cadastradas e permite ativar ou desativar cada uma.
+// A alteração de status fica disponível somente para administradores.
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-$pageTitle = 'Usuários | MathPlay';
+$pageTitle = 'Usuários | Mathematics Education';
+// Busca os perfis em ordem alfabética para preencher a tabela de usuários.
 $stmt = $pdo->query('SELECT * FROM usuarios ORDER BY nome ASC');
 $usuarios = $stmt->fetchAll();
 
+// A ação é executada apenas quando o formulário envia um ID por POST.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
     $id = (int) $_POST['toggle_id'];
     $stmt = $pdo->prepare('UPDATE usuarios SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = :id');
@@ -18,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
 <section class="container page-section">
     <div class="mb-4">
         <span class="section-badge">Gerenciamento</span>
-        <h1 class="mt-2 mb-0">Alunos</h1>
+        <h1 class="mt-2 mb-0">Usuários</h1>
     </div>
 
     <div class="panel-box">
@@ -27,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
                 <tr>
                     <th>Nome</th>
                     <th>E-mail</th>
+                    <th>Perfil</th>
                     <th>Ano</th>
                     <th>Pontos</th>
                     <th>XP</th>
@@ -40,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
                     <tr>
                         <td><?php echo e($usuario['nome']); ?></td>
                         <td><?php echo e($usuario['email']); ?></td>
-                        <td><?php echo (int) $usuario['ano_escolar']; ?>º</td>
+                        <td><?php echo e(ucfirst($usuario['tipo'])); ?></td>
+                        <td><?php echo $usuario['tipo'] === 'aluno' ? (int) $usuario['ano_escolar'] . 'º' : '—'; ?></td>
                         <td><?php echo (int) $usuario['pontos']; ?></td>
                         <td><?php echo (int) $usuario['xp']; ?></td>
                         <td><?php echo (int) $usuario['nivel']; ?></td>

@@ -1,15 +1,18 @@
 <?php
+// Mostra os resultados acumulados do aluno em cada matéria da sua série.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
-$pageTitle = 'Desempenho | MathPlay';
+$pageTitle = 'Desempenho | Mathematics Education';
 $user = get_logged_user();
+$anoEscolar = (int) ($user['ano_escolar'] ?? 0);
+// LEFT JOIN mantém as matérias sem partidas, preenchendo os resultados com zero.
 $stmt = $pdo->prepare('SELECT m.nome, COALESCE(d.partidas, 0) AS partidas, COALESCE(d.acertos, 0) AS acertos, COALESCE(d.erros, 0) AS erros, COALESCE(d.percentual, 0) AS percentual, COALESCE(d.classificacao, \'SEM PARTIDAS\') AS classificacao
     FROM materias m
     LEFT JOIN desempenho d ON d.materia_id = m.id AND d.usuario_id = :usuario_id
     WHERE m.ativo = 1 AND m.ano_escolar = :ano
     ORDER BY m.nome ASC');
-$stmt->execute(['usuario_id' => $user['id'], 'ano' => $user['ano_escolar']]);
+$stmt->execute(['usuario_id' => $user['id'], 'ano' => $anoEscolar]);
 $dados = $stmt->fetchAll();
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
@@ -28,6 +31,9 @@ $dados = $stmt->fetchAll();
         <div class="col-lg-4">
             <div class="panel-box">
                 <h4>Resumo</h4>
+                <?php if (empty($dados)): ?>
+                    <p class="text-muted mb-0">Nenhuma matéria disponível para sua série.</p>
+                <?php endif; ?>
                 <?php foreach ($dados as $item): ?>
                     <div class="progress-row">
                         <div class="d-flex justify-content-between">
@@ -47,24 +53,27 @@ $dados = $stmt->fetchAll();
 </section>
 
 <script>
-    const labels = <?php echo json_encode(array_map(fn($n) => $n['nome'], $dados)); ?>;
-    const values = <?php echo json_encode(array_map(fn($n) => $n['percentual'], $dados)); ?>;
+    document.addEventListener('DOMContentLoaded', () => {
+        // Envia ao gráfico apenas nomes e percentuais, codificados como JSON seguro.
+        const labels = <?php echo json_encode(array_column($dados, 'nome'), JSON_UNESCAPED_UNICODE); ?>;
+        const values = <?php echo json_encode(array_map('intval', array_column($dados, 'percentual'))); ?>;
 
-    new Chart(document.getElementById('desempenhoChart'), {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Desempenho por matéria',
-                data: values,
-                backgroundColor: ['#4f6ef7', '#7c5cff', '#4cc9a7', '#ffb84d', '#f66d6d', '#69d2ff'],
-                borderRadius: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true, max: 100 } }
-        }
+        new Chart(document.getElementById('desempenhoChart'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Desempenho por matéria (%)',
+                    data: values,
+                    backgroundColor: ['#4f6ef7', '#7c5cff', '#4cc9a7', '#ffb84d', '#f66d6d', '#69d2ff'],
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
     });
 </script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

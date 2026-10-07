@@ -1,4 +1,7 @@
+/* Estilos compartilhados: base visual, componentes das páginas e temas do Mathematics Education. */
+/* Regras globais e tipografia base. */
 * { box-sizing: border-box; }
+html { font-size: var(--accessibility-font-scale, 100%); }
 body {
     font-family: 'Inter', sans-serif;
     background: #f5f7ff;
@@ -8,6 +11,7 @@ body {
 }
 
 a { text-decoration: none; }
+/* Cabeçalho, navegação e identidade visual do sistema. */
 .main-content { padding-top: 86px; }
 .navbar {
     background: linear-gradient(135deg, #1d4ed8 0%, #6d4ef4 100%);
@@ -28,6 +32,7 @@ a { text-decoration: none; }
     background: linear-gradient(135deg, #edf3ff 0%, #f6f1ff 100%);
     padding: 34px 0 18px;
 }
+/* Cartões e painéis usados no painel, nas matérias e na página de jogos. */
 .section-badge {
     display: inline-block; background: rgba(79,110,247,0.12); color: #3c5fe4; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
 }
@@ -80,6 +85,7 @@ a { text-decoration: none; }
 .card-glass {
     background: rgba(255,255,255,0.8); backdrop-filter: blur(14px); border-radius: 22px; border: 1px solid rgba(255,255,255,0.68); box-shadow: 0 18px 46px rgba(59,76,150,0.1);
 }
+/* Detalhes de tabelas e resumos do histórico de partidas. */
 .table { --bs-table-color: #1f2a44; }
 .history-details-row > td { background: #f8faff; }
 .history-details-row .table { font-size: .85rem; }
@@ -97,9 +103,132 @@ a { text-decoration: none; }
 .history-team-summary strong { width: 100%; }
 .history-team-blue { color: #215bb8; }
 .history-team-red { color: #c63d4f; }
+/* Controles fixos para alternar o tema e ajustar a leitura. */
+.accessibility-tools { position: fixed; right: 18px; bottom: 18px; z-index: 1080; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font-size: 1rem; }
+.theme-toggle { display: flex; align-items: center; gap: 8px; border: 2px solid #fff; border-radius: 999px; padding: 9px 15px; background: #fff; color: #23345f; font-weight: 700; box-shadow: 0 8px 24px rgba(22, 40, 97, .2); cursor: pointer; }
+.theme-toggle:hover, .theme-toggle:focus-visible { background: #eef3ff; outline: 3px solid #ffce45; outline-offset: 2px; }
+.theme-toggle i { font-size: 1.2em; }
+.accessibility-toggle { display: flex; align-items: center; gap: 8px; border: 2px solid #fff; border-radius: 999px; padding: 10px 16px; background: #173fb8; color: #fff; font-weight: 700; box-shadow: 0 8px 24px rgba(22, 40, 97, .28); cursor: pointer; }
+.accessibility-toggle:hover, .accessibility-toggle:focus-visible { background: #102f91; outline: 3px solid #ffce45; outline-offset: 2px; }
+.accessibility-toggle i { font-size: 1.35em; }
+.accessibility-panel { position: absolute; right: 0; bottom: calc(100% + 10px); width: min(320px, calc(100vw - 32px)); padding: 18px; border: 2px solid #cad5f2; border-radius: 18px; background: #fff; color: #1f2a44; box-shadow: 0 16px 40px rgba(20, 30, 70, .22); }
+.accessibility-panel[hidden] { display: none; }
+.accessibility-panel h2 { margin: 0 0 6px; font-size: 1.15em; font-weight: 800; }
+.accessibility-panel p { margin: 0 0 14px; font-size: .9em; }
+.accessibility-actions { display: flex; gap: 8px; }
+.accessibility-actions button { min-width: 58px; min-height: 44px; border: 2px solid #2448bb; border-radius: 10px; padding: 7px 12px; background: #fff; color: #17398f; font: inherit; font-weight: 800; cursor: pointer; }
+.accessibility-actions button:hover, .accessibility-actions button:focus-visible { background: #eaf0ff; outline: 3px solid #ffce45; outline-offset: 2px; }
+.accessibility-actions #resetText { flex: 1; }
 
+/* Sobrescreve as cores compartilhadas quando o elemento raiz ativa o tema escuro. */
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --bs-body-color: #e5eaf5;
+    --bs-body-bg: #111827;
+    --bs-emphasis-color: #f8fafc;
+    --bs-secondary-color: #a8b3c7;
+    --bs-tertiary-color: #8793a8;
+    --bs-border-color: #344155;
+    --bs-secondary-bg: #202b3c;
+    --bs-tertiary-bg: #1a2433;
+    --bs-link-color: #9cb7ff;
+    --bs-link-hover-color: #c1d0ff;
+    --bs-table-color: #e5eaf5;
+    --bs-table-bg: transparent;
+    --bs-table-border-color: #344155;
+    --bs-table-striped-color: #e5eaf5;
+    --bs-table-striped-bg: rgba(255, 255, 255, .035);
+    --bs-table-hover-color: #fff;
+    --bs-table-hover-bg: rgba(255, 255, 255, .06);
+}
+
+html[data-theme="dark"] body {
+    background: #111827;
+    color: #e5eaf5;
+}
+
+html[data-theme="dark"] .dashboard-hero { background: linear-gradient(135deg, #18243a 0%, #26213f 100%); }
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .panel-box,
+html[data-theme="dark"] .game-card,
+html[data-theme="dark"] .materia-card,
+html[data-theme="dark"] .card-glass,
+html[data-theme="dark"] .history-summary-grid div,
+html[data-theme="dark"] .history-team-summary,
+html[data-theme="dark"] .history-toggle-cell,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .dropdown-menu,
+html[data-theme="dark"] .list-group-item {
+    background: #202b3c;
+    color: #e5eaf5;
+    border-color: #344155;
+}
+html[data-theme="dark"] .materia-card { background: linear-gradient(180deg, #202b3c, #1a2433); }
+html[data-theme="dark"] .history-details-row > td,
+html[data-theme="dark"] .history-separator td { background: #1a2433; color: #c4cede; }
+html[data-theme="dark"] .study-item,
+html[data-theme="dark"] .achievement-list li { border-color: #344155; }
+html[data-theme="dark"] .stat-card small,
+html[data-theme="dark"] .study-item .text-muted,
+html[data-theme="dark"] .panel-box .text-muted,
+html[data-theme="dark"] .card-glass .text-muted,
+html[data-theme="dark"] .history-summary-grid span { color: #a8b3c7 !important; }
+html[data-theme="dark"] .progress { background: #344155; }
+html[data-theme="dark"] .mini-materia,
+html[data-theme="dark"] .history-summary-grid div { background: #1a2433; }
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .input-group-text {
+    background-color: #172131;
+    color: #e5eaf5;
+    border-color: #46536a;
+}
+html[data-theme="dark"] .form-control::placeholder { color: #9aa7bb; }
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .form-select:focus {
+    background-color: #172131;
+    color: #fff;
+    border-color: #819cff;
+}
+html[data-theme="dark"] .form-select option { background: #172131; color: #e5eaf5; }
+html[data-theme="dark"] .table > :not(caption) > * > * { color: #e5eaf5; }
+html[data-theme="dark"] .table thead th { background: #1a2433; }
+html[data-theme="dark"] .table-light,
+html[data-theme="dark"] .table-light > * > * { --bs-table-color: #e5eaf5; --bs-table-bg: #1a2433; }
+html[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+html[data-theme="dark"] .navbar { border-bottom: 1px solid rgba(255, 255, 255, .12); }
+html[data-theme="dark"] .section-badge { background: rgba(132, 157, 255, .18); color: #b8c8ff; }
+html[data-theme="dark"] .profile-avatar { border-color: #344155; }
+html[data-theme="dark"] .accessibility-panel {
+    background: #202b3c;
+    color: #e5eaf5;
+    border-color: #53627b;
+}
+html[data-theme="dark"] .accessibility-actions button {
+    background: #172131;
+    color: #d4deff;
+    border-color: #819cff;
+}
+html[data-theme="dark"] .accessibility-actions button:hover,
+html[data-theme="dark"] .accessibility-actions button:focus-visible,
+html[data-theme="dark"] .theme-toggle:hover,
+html[data-theme="dark"] .theme-toggle:focus-visible { background: #344155; }
+html[data-theme="dark"] .theme-toggle { background: #202b3c; color: #f9d76e; border-color: #53627b; }
+html[data-theme="dark"] .login-card,
+html[data-theme="dark"] .recovery-card,
+html[data-theme="dark"] .register-box { background: #202b3c; color: #e5eaf5; }
+html[data-theme="dark"] body:has(.login-shell),
+html[data-theme="dark"] body:has(.recovery-card),
+html[data-theme="dark"] body:has(.register-box) { background: linear-gradient(135deg, #111827 0%, #211d35 100%); }
+html[data-theme="dark"] .login-form .form-control,
+html[data-theme="dark"] .recovery-card .form-control,
+html[data-theme="dark"] .register-box .form-control,
+html[data-theme="dark"] .register-box .form-select { background: #172131; color: #e5eaf5; border-color: #46536a; }
+
+/* Ajustes de espaçamento e organização para telas menores. */
 @media (max-width: 768px) {
     .main-content { padding-top: 70px; }
     .study-item { flex-direction: column; align-items: flex-start; }
     .history-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .accessibility-tools { right: 12px; bottom: 12px; }
 }

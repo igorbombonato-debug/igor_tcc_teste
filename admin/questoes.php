@@ -1,12 +1,17 @@
 <?php
+// Gerencia o cadastro, a edição, o status e a exclusão de questões.
+// O acesso a todas essas operações é restrito a administradores.
 require_once __DIR__ . '/../includes/auth.php';
 require_admin();
 
-$pageTitle = 'Questões | MathPlay';
+$pageTitle = 'Questões | Mathematics Education';
 
+// As operações de escrita chegam por POST; a ação informada determina
+// se a questão será criada, editada, ativada/desativada ou removida.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     $acao = $_POST['acao'];
     if ($acao === 'salvar') {
+        // Converte os campos do formulário para os formatos usados no banco.
         $id = (int) ($_POST['id'] ?? 0);
         $materiaId = (int) ($_POST['materia_id'] ?? 0);
         $ano = (int) ($_POST['ano_escolar'] ?? 6);
@@ -19,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         $resposta = strtoupper(trim($_POST['resposta_correta'] ?? 'A'));
         $exp = trim($_POST['explicacao'] ?? '');
 
+        // Um ID existente significa edição; sem ID, uma nova questão é criada.
         if ($id > 0) {
             $stmt = $pdo->prepare('UPDATE questoes SET materia_id = :materia_id, ano_escolar = :ano_escolar, dificuldade = :dificuldade, enunciado = :enunciado, alternativa_a = :a, alternativa_b = :b, alternativa_c = :c, alternativa_d = :d, resposta_correta = :resposta, explicacao = :exp WHERE id = :id');
             $stmt->execute([
@@ -54,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     }
 
     if ($acao === 'toggle') {
+        // Alterna o status ativo diretamente no banco.
         $id = (int) ($_POST['id'] ?? 0);
         $stmt = $pdo->prepare('UPDATE questoes SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = :id');
         $stmt->execute(['id' => $id]);
@@ -62,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     }
 
     if ($acao === 'excluir') {
+        // Remove a questão indicada pelo formulário.
         $id = (int) ($_POST['id'] ?? 0);
         $stmt = $pdo->prepare('DELETE FROM questoes WHERE id = :id');
         $stmt->execute(['id' => $id]);
@@ -70,6 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     }
 }
 
+// A tela mostra até 100 questões recentes e oferece apenas matérias ativas
+// para seleção no formulário de cadastro.
 $questoes = $pdo->query('SELECT q.*, m.nome as materia_nome FROM questoes q LEFT JOIN materias m ON m.id = q.materia_id ORDER BY q.id DESC LIMIT 100')->fetchAll();
 $materias = $pdo->query('SELECT * FROM materias WHERE ativo = 1 ORDER BY nome ASC')->fetchAll();
 ?>

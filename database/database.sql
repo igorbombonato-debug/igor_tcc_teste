@@ -1,3 +1,5 @@
+-- Script de instalação inicial do Mathematics Education: cria as tabelas e carrega matérias e perguntas de exemplo.
+-- Atenção: os DROP TABLE abaixo apagam dados existentes; use este arquivo para uma instalação limpa.
 -- Cria o banco usando UTF-8 para preservar acentos.
 CREATE DATABASE IF NOT EXISTS mathplay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- Seleciona o banco que receberá as tabelas abaixo.
@@ -23,7 +25,7 @@ CREATE TABLE usuarios (
     username VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('aluno', 'admin') NOT NULL DEFAULT 'aluno',
+    tipo ENUM('aluno', 'professor', 'admin') NOT NULL DEFAULT 'aluno',
     ano_escolar TINYINT NOT NULL,
     xp INT NOT NULL DEFAULT 0,
     nivel INT NOT NULL DEFAULT 1,
@@ -98,15 +100,17 @@ CREATE TABLE partidas (
 CREATE TABLE respostas (
     id INT PRIMARY KEY AUTO_INCREMENT,
     partida_id INT NOT NULL,
-    questao_id INT NOT NULL,
-    resposta_usuario CHAR(1) DEFAULT NULL,
+    questao_id INT DEFAULT NULL,
+    resposta_usuario VARCHAR(255) DEFAULT NULL,
+    enunciado_snapshot TEXT DEFAULT NULL,
+    resposta_correta VARCHAR(255) DEFAULT NULL,
     jogador_nome VARCHAR(100) DEFAULT NULL,
     time_jogador ENUM('azul', 'vermelho') DEFAULT NULL,
     correta TINYINT(1) NOT NULL DEFAULT 0,
     tempo_resposta INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_respostas_partida FOREIGN KEY (partida_id) REFERENCES partidas(id) ON DELETE CASCADE,
-    CONSTRAINT fk_respostas_questao FOREIGN KEY (questao_id) REFERENCES questoes(id) ON DELETE CASCADE
+    CONSTRAINT fk_respostas_questao FOREIGN KEY (questao_id) REFERENCES questoes(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
@@ -142,6 +146,7 @@ CREATE TABLE usuario_conquistas (
     CONSTRAINT fk_usuario_conquistas_conquista FOREIGN KEY (conquista_id) REFERENCES conquistas(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Insere matérias iniciais das séries atendidas; IGNORE evita repetir linhas conflitantes.
 INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Números naturais', 'Estudo dos números inteiros positivos e suas propriedades.', 6, 'bi-123', 1),
 ('Números inteiros', 'Trabalho com números positivos e negativos.', 6, 'bi-plus-slash-minus', 1),
@@ -249,8 +254,10 @@ INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Probabilidade', 'Eventos e chance.', 9, 'bi-shuffle', 1),
 ('Gráficos', 'Leitura de gráficos de funções.', 9, 'bi-bar-chart-steps', 1);
 
+-- Tabela auxiliar para perguntas geradas, separada das questões cadastradas para as partidas.
 CREATE TABLE IF NOT EXISTS perguntas_geradas ( id INT PRIMARY KEY AUTO_INCREMENT, materia_id INT, ano_escolar TINYINT, dificuldade VARCHAR(20), enunciado TEXT, alternativa_a VARCHAR(255), alternativa_b VARCHAR(255), alternativa_c VARCHAR(255), alternativa_d VARCHAR(255), resposta_correta CHAR(1), explicacao TEXT );
 
+-- Repete a inclusão das matérias do 6º ano com proteção contra duplicidades.
 INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Números naturais', 'Estudo dos números inteiros positivos e suas propriedades.', 6, 'bi-123', 1),
 ('Números inteiros', 'Trabalho com números positivos e negativos.', 6, 'bi-plus-slash-minus', 1),
@@ -271,18 +278,21 @@ INSERT IGNORE INTO materias (nome, descricao, ano_escolar, icone, ativo) VALUES
 ('Gráficos', 'Leitura e interpretação de gráficos.', 6, 'bi-bar-chart', 1),
 ('Estatística básica', 'Média, moda e mediana.', 6, 'bi-graph-up-arrow', 1);
 
+-- Guarda parâmetros gerais da aplicação em pares de chave e valor.
 CREATE TABLE IF NOT EXISTS configuracoes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     chave VARCHAR(100) NOT NULL UNIQUE,
     valor TEXT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Valores iniciais de configuração lidos pela aplicação.
 INSERT INTO configuracoes (chave, valor) VALUES
 ('versao', '1.0'),
-('nome_sistema', 'MathPlay');
+('nome_sistema', 'Mathematics Education');
 
 SET @base_materia_id := 1;
 
+-- Conjunto inicial de questões; cada alternativa usa A-D e o gabarito guarda a letra correta.
 INSERT INTO questoes (materia_id, ano_escolar, dificuldade, enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao, ativo) VALUES
 (1, 6, 'Fácil', 'Qual é o resultado de 15 + 27?', '32', '42', '40', '38', 'B', 'Somando 15 + 27 resulta em 42.', 1),
 (1, 6, 'Fácil', 'Qual é o próximo número da sequência: 2, 4, 6, 8, ?', '9', '10', '12', '14', 'B', 'A sequência aumenta de 2 em 2 e o próximo número é 10.', 1),
@@ -422,6 +432,7 @@ INSERT INTO questoes (materia_id, ano_escolar, dificuldade, enunciado, alternati
 (48, 9, 'Médio', 'Qual é o resultado de 5² - 3²?', '8', '16', '25', '34', 'C', '25 - 9 = 16.', 1),
 (48, 9, 'Difícil', 'Qual é a solução de 2x² - 8 = 0?', 'x = ±2', 'x = ±4', 'x = ±8', 'x = ±16', 'A', '2x² = 8 => x² = 4 => x = ±2.', 1);
 
+-- Perguntas adicionais associadas à matéria pelo nome, em vez de depender de um ID fixo.
 INSERT INTO questoes (materia_id, ano_escolar, dificuldade, enunciado, alternativa_a, alternativa_b, alternativa_c, alternativa_d, resposta_correta, explicacao, ativo)
 SELECT m.id, 6, 'Fácil', 'Qual é o resultado de 7 + 9?', '14', '15', '16', '17', 'C', '7 + 9 = 16.', 1
 FROM materias m WHERE m.nome = 'Operações básicas' LIMIT 1;
@@ -447,4 +458,4 @@ SELECT m.id, 6, 'Difícil', 'Qual é o valor de 2/3 × 3/4?', '1/2', '2/3', '3/4
 FROM materias m WHERE m.nome = 'Frações' LIMIT 1;
 
 
-SELECT 'Banco MathPlay inicializado com sucesso.' AS status;
+SELECT 'Banco Mathematics Education inicializado com sucesso.' AS status;

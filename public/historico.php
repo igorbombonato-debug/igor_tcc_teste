@@ -1,9 +1,10 @@
 <?php
+// Lista as partidas do aluno e permite consultar respostas ou excluir registros próprios.
 // Exige autenticação para que cada aluno veja somente o próprio histórico.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
-$pageTitle = 'Histórico | MathPlay';
+$pageTitle = 'Histórico | Mathematics Education';
 $user = get_logged_user();
 
 // Exclui somente uma partida pertencente ao usuário autenticado.
@@ -23,7 +24,7 @@ $stmt->execute(['id' => $user['id']]);
 $partidas = $stmt->fetchAll();
 // Organiza as respostas detalhadas por ID de partida.
 $respostasPorPartida = [];
-    // Usa placeholders para consultar vários IDs sem concatenar valores diretamente.
+    // Cria um placeholder por ID para consultar em lote sem inserir valores no SQL.
 if ($partidas) {
     $ids = array_column($partidas, 'id');
     $placeholders = implode(',', array_fill(0, count($ids), '?'));

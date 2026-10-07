@@ -1,10 +1,17 @@
 <?php
+// Exibe o resumo de progresso e recomenda conteúdos ao aluno autenticado.
 require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
 $user = get_logged_user();
-$pageTitle = 'Dashboard | MathPlay';
+// Professores usam uma área própria, sem acessar o painel de aluno.
+if ($user['tipo'] === 'professor') {
+    header('Location: /igor_tcc_teste/professor/index.php');
+    exit;
+}
+$pageTitle = 'Dashboard | Mathematics Education';
 
+// Soma os resultados de todas as partidas do usuário para os cartões do painel.
 $statsSql = 'SELECT COUNT(*) as partidas, SUM(acertos) as acertos, SUM(erros) as erros, SUM(pontuacao) as pontos FROM partidas WHERE usuario_id = :id';
 $stmt = $pdo->prepare($statsSql);
 $stmt->execute(['id' => $user['id']]);
@@ -12,6 +19,7 @@ $stats = $stmt->fetch();
 
 $materias = obter_materias($user['ano_escolar']);
 $topDificuldades = [];
+// Calcula o desempenho em cada matéria e prioriza as que precisam de mais prática.
 foreach ($materias as $materia) {
     $percent = calcular_percentual_materia($user['id'], $materia['id']);
     $topDificuldades[] = ['nome' => $materia['nome'], 'percentual' => $percent];
@@ -19,6 +27,7 @@ foreach ($materias as $materia) {
 usort($topDificuldades, fn($a, $b) => $a['percentual'] <=> $b['percentual']);
 $lowPerformance = array_slice($topDificuldades, 0, 4);
 
+// Define o nível atual e a meta usada para representar visualmente o progresso.
 $xpAtual = (int) $user['xp'];
 $proximo = get_xp_proximo_nivel($xpAtual);
 $nivelAtual = get_nivel_por_xp($xpAtual);

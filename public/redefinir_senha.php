@@ -1,15 +1,17 @@
 <?php
+// Valida um link de recuperação e troca a senha uma única vez, dentro de uma transação.
 require_once __DIR__ . '/../includes/auth.php';
 
 redirect_if_logged_in();
 
-$pageTitle = 'Redefinir senha | MathPlay';
+$pageTitle = 'Redefinir senha | Mathematics Education';
 $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
 $erro = '';
 $sucesso = '';
 $recuperacao = null;
 
 if ($token !== '') {
+    // O token é procurado pelo hash e precisa estar ativo e dentro do prazo.
     $stmt = $pdo->prepare('SELECT * FROM recuperacao_senhas WHERE token_hash = :token_hash AND usado = 0 AND expira_em > NOW() LIMIT 1');
     $stmt->execute(['token_hash' => hash('sha256', $token)]);
     $recuperacao = $stmt->fetch() ?: null;
@@ -19,22 +21,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senha = $_POST['senha'] ?? '';
     $confirmacao = $_POST['confirmar_senha'] ?? '';
 
-    if (!$recuperacao) {
-        $erro = 'Este link é inválido, já foi usado ou expirou.';
-    } elseif (strlen($senha) < 6) {
+    // Confere a senha antes de abrir a transação de atualização.
+    if (strlen($senha) < 6) {
         $erro = 'A senha deve conter no mínimo 6 caracteres.';
     } elseif ($senha !== $confirmacao) {
         $erro = 'As senhas não conferem.';
     } else {
+        // O bloqueio da linha impede que duas requisições usem o mesmo token ao mesmo tempo.
         $pdo->beginTransaction();
-        $pdo->prepare('UPDATE usuarios SET senha = :senha WHERE id = :id')->execute([
+        $stmt = $pdo->prepare('SELECT id, usuario_id FROM recuperacao_senhas WHERE token_hash = :token_hash AND usado = 0 AND expira_em > NOW() LIMIT 1 FOR UPDATE');
+        $stmt->execute(['token_hash' => hash('sha256', $token)]);
+        $recuperacao = $stmt->fetch() ?: null;
+
+        if (!$recuperacao) {
+            $pdo->rollBack();
+            $erro = 'Este link é inválido, já foi usado ou expirou.';
+        } else {
+            $pdo->prepare('UPDATE usuarios SET senha = :senha WHERE id = :id')->execute([
             'senha' => password_hash($senha, PASSWORD_DEFAULT),
             'id' => $recuperacao['usuario_id'],
-        ]);
-        $pdo->prepare('UPDATE recuperacao_senhas SET usado = 1 WHERE id = :id')->execute(['id' => $recuperacao['id']]);
-        $pdo->commit();
-        $sucesso = 'Senha alterada com sucesso. Agora você já pode entrar.';
-        $recuperacao = null;
+            ]);
+            $pdo->prepare('UPDATE recuperacao_senhas SET usado = 1 WHERE id = :id')->execute(['id' => $recuperacao['id']]);
+            $pdo->commit();
+            $sucesso = 'Senha alterada com sucesso. Agora você já pode entrar.';
+            $recuperacao = null;
+        }
     }
 }
 ?>

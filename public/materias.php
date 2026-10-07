@@ -1,10 +1,12 @@
 <?php
+// Apresenta as matérias da série do aluno e opções para estudar cada conteúdo.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
-$pageTitle = 'Matérias | MathPlay';
+$pageTitle = 'Matérias | Mathematics Education';
 $user = get_logged_user();
 $ano = (int) ($user['ano_escolar'] ?? 6);
+// A função filtra as matérias ativas pela série atual.
 $materias = obter_materias($ano);
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
@@ -18,6 +20,7 @@ $materias = obter_materias($ano);
     </div>
 
     <div class="row g-4">
+        <?php // Cada matéria disponível vira um cartão com desempenho e opções de estudo. ?>
         <?php foreach ($materias as $materia): ?>
             <div class="col-md-6 col-xl-4">
                 <div class="card materia-card h-100">
@@ -29,9 +32,11 @@ $materias = obter_materias($ano);
                         <h5><?php echo e($materia['nome']); ?></h5>
                         <p><?php echo e($materia['descricao'] ?: 'Pratique esta matéria para evoluir seu desempenho.'); ?></p>
                         <div class="d-flex justify-content-between align-items-center">
+                            <?php // O percentual vem do histórico de partidas do aluno nesta matéria. ?>
                             <span class="text-muted">Desempenho: <?php echo calcular_percentual_materia($user['id'], $materia['id']); ?>%</span>
                             <div class="d-flex gap-2 flex-wrap justify-content-end">
                                 <?php
+                                // Monta uma busca contextualizada para a videoaula externa.
                                 $buscaVideo = $materia['nome'] . ' ' . $materia['ano_escolar'] . 'º ano matemática videoaula';
                                 ?>
                                 <a href="https://www.youtube.com/results?search_query=<?php echo rawurlencode($buscaVideo); ?>" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener noreferrer">
