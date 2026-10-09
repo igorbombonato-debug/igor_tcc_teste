@@ -31,6 +31,7 @@ $lowPerformance = array_slice($topDificuldades, 0, 4);
 $xpAtual = (int) $user['xp'];
 $proximo = get_xp_proximo_nivel($xpAtual);
 $nivelAtual = get_nivel_por_xp($xpAtual);
+$faseInfo = get_fase_info($xpAtual);
 $xpMeta = max($nivelAtual * 500, 500);
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
@@ -79,8 +80,8 @@ $xpMeta = max($nivelAtual * 500, 500);
             <div class="stat-card orange">
                 <div class="icon">🎯</div>
                 <div>
-                    <small>ACERTOS</small>
-                    <h3><?php echo (int) ($stats['acertos'] ?? 0); ?></h3>
+                    <small>FASE</small>
+                    <h3><?php echo $faseInfo['fase']; ?></h3>
                 </div>
             </div>
         </div>
@@ -90,13 +91,13 @@ $xpMeta = max($nivelAtual * 500, 500);
         <div class="col-lg-7">
             <div class="panel-box">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Progresso de XP</h4>
-                    <span><?php echo $xpAtual; ?> / <?php echo $xpMeta; ?> XP</span>
+                    <h4 class="mb-0">Progresso de fase</h4>
+                    <span><?php echo $faseInfo['nome']; ?> · <?php echo $xpAtual; ?> / <?php echo $faseInfo['meta']; ?> XP</span>
                 </div>
                 <div class="progress">
-                    <div class="progress-bar" role="progressbar" style="width: <?php echo min(100, (($xpAtual / $xpMeta) * 100)); ?>%"></div>
+                    <div class="progress-bar" role="progressbar" style="width: <?php echo min(100, (($xpAtual / $faseInfo['meta']) * 100)); ?>%"></div>
                 </div>
-                <small class="text-muted mt-2 d-block">Faltam <?php echo $proximo; ?> XP para o próximo nível.</small>
+                <small class="text-muted mt-2 d-block">Faltam <?php echo $faseInfo['proximo']; ?> XP para a próxima fase. Continue praticando para avançar.</small>
             </div>
 
             <div class="panel-box mt-4">

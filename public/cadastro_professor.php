@@ -6,6 +6,10 @@ redirect_if_logged_in();
 
 $pageTitle = 'Cadastro de professor | Mathematics Education';
 $error = '';
+$nome = '';
+$username = '';
+$email = '';
+$campoInvalido = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Lê os campos do formulário; os textos são limpos antes de validar e gravar.
@@ -18,16 +22,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Cada etapa valida um requisito antes de permitir a criação da conta.
     if ($nome === '' || $username === '' || $email === '' || $senha === '' || $confirmar === '') {
         $error = 'Todos os campos são obrigatórios.';
+        $campoInvalido = $nome === '' ? 'nome' : ($username === '' ? 'username' : ($email === '' ? 'email' : ($senha === '' ? 'senha' : 'confirmar_senha')));
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Informe um e-mail válido.';
+        $email = '';
+        $campoInvalido = 'email';
     } elseif (strlen($senha) < 6) {
         $error = 'A senha deve conter no mínimo 6 caracteres.';
+        $campoInvalido = 'senha';
     } elseif ($senha !== $confirmar) {
         $error = 'As senhas não conferem.';
+        $campoInvalido = 'confirmar_senha';
     } elseif (buscar_usuario_por_email($email)) {
         $error = 'Este e-mail já está cadastrado.';
+        $email = '';
+        $campoInvalido = 'email';
     } elseif (buscar_usuario_por_username($username)) {
         $error = 'Este usuário já existe.';
+        $username = '';
+        $campoInvalido = 'username';
     } else {
         // Armazena o hash da senha, nunca a senha original.
         $stmt = $pdo->prepare('INSERT INTO usuarios (nome, username, email, senha, tipo, ano_escolar, xp, nivel, pontos, ativo, created_at) VALUES (:nome, :username, :email, :senha, \'professor\', 0, 0, 1, 0, 1, NOW())');
@@ -58,23 +71,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" class="row g-3">
             <div class="col-md-6">
                 <label class="form-label" for="nome">Nome</label>
-                <input id="nome" type="text" name="nome" class="form-control" maxlength="255" required>
+                <input id="nome" type="text" name="nome" class="form-control" value="<?php echo e($nome); ?>" <?php echo $campoInvalido === 'nome' ? 'autofocus' : ''; ?> maxlength="255" required>
             </div>
             <div class="col-md-6">
                 <label class="form-label" for="username">Usuário</label>
-                <input id="username" type="text" name="username" class="form-control" maxlength="100" required>
+                <input id="username" type="text" name="username" class="form-control" value="<?php echo e($username); ?>" <?php echo $campoInvalido === 'username' ? 'autofocus' : ''; ?> maxlength="100" required>
             </div>
             <div class="col-12">
                 <label class="form-label" for="email">E-mail</label>
-                <input id="email" type="email" name="email" class="form-control" maxlength="255" required>
+                <input id="email" type="email" name="email" class="form-control" value="<?php echo e($email); ?>" <?php echo $campoInvalido === 'email' ? 'autofocus' : ''; ?> maxlength="255" required>
             </div>
             <div class="col-md-6">
                 <label class="form-label" for="senha">Senha</label>
-                <input id="senha" type="password" name="senha" class="form-control" minlength="6" required>
+                <input id="senha" type="password" name="senha" class="form-control" <?php echo $campoInvalido === 'senha' ? 'autofocus' : ''; ?> minlength="6" required>
             </div>
             <div class="col-md-6">
                 <label class="form-label" for="confirmar_senha">Confirmar senha</label>
-                <input id="confirmar_senha" type="password" name="confirmar_senha" class="form-control" minlength="6" required>
+                <input id="confirmar_senha" type="password" name="confirmar_senha" class="form-control" <?php echo $campoInvalido === 'confirmar_senha' ? 'autofocus' : ''; ?> minlength="6" required>
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary w-100">Criar conta de professor</button>

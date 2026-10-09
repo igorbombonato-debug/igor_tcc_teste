@@ -1,9 +1,114 @@
 // Controla preferências visuais e recursos de acessibilidade compartilhados pelas páginas.
+window.mostrarCelebracaoFase = fase => {
+    if (!fase || document.querySelector('.phase-up-overlay')) return;
+
+    const focoAnterior = document.activeElement;
+    const sobreposicao = document.createElement('div');
+    sobreposicao.className = 'phase-up-overlay';
+    sobreposicao.setAttribute('role', 'dialog');
+    sobreposicao.setAttribute('aria-modal', 'true');
+    sobreposicao.setAttribute('aria-labelledby', 'phaseUpTitle');
+    sobreposicao.setAttribute('aria-describedby', 'phaseUpMessage');
+    sobreposicao.innerHTML = `
+        <section class="phase-up-card">
+            <div class="phase-up-icon"><i class="bi bi-stars" aria-hidden="true"></i></div>
+            <span class="section-badge">Nova conquista</span>
+            <h2 id="phaseUpTitle">Você avançou de fase!</h2>
+            <p class="phase-up-name"></p>
+            <p id="phaseUpMessage">Cada desafio vencido fortalece o que você aprendeu. Continue praticando e descubra até onde pode chegar!</p>
+            <button type="button" class="btn btn-primary" data-phase-dismiss>Continuar</button>
+        </section>
+    `;
+    sobreposicao.querySelector('.phase-up-name').textContent = `Fase ${fase.numero}: ${fase.nome}`;
+
+    const fechar = () => {
+        sobreposicao.remove();
+        document.removeEventListener('keydown', aoPressionarEscape);
+        focoAnterior?.focus?.();
+    };
+    const aoPressionarEscape = event => {
+        if (event.key === 'Escape') fechar();
+    };
+
+    sobreposicao.querySelector('[data-phase-dismiss]').addEventListener('click', fechar);
+    document.addEventListener('keydown', aoPressionarEscape);
+    document.body.append(sobreposicao);
+    sobreposicao.querySelector('[data-phase-dismiss]').focus();
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // Preenche uma largura padrão apenas quando a barra de progresso ainda não tem valor.
     const progressBar = document.querySelector('.progress-bar');
     if (progressBar) {
         progressBar.style.width = progressBar.style.width || '50%';
+    }
+
+    document.querySelectorAll('input[type="password"]').forEach((passwordInput, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'password-field';
+        passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+        wrapper.append(passwordInput);
+        passwordInput.classList.add('password-input');
+
+        if (!passwordInput.id) {
+            passwordInput.id = `password-field-${index + 1}`;
+        }
+
+        const visibilityButton = document.createElement('button');
+        visibilityButton.type = 'button';
+        visibilityButton.className = 'password-toggle';
+        visibilityButton.setAttribute('aria-label', 'Mostrar senha');
+        visibilityButton.setAttribute('aria-controls', passwordInput.id);
+        visibilityButton.setAttribute('aria-pressed', 'false');
+        visibilityButton.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>';
+        visibilityButton.addEventListener('click', () => {
+            const isVisible = passwordInput.type === 'text';
+            passwordInput.type = isVisible ? 'password' : 'text';
+            visibilityButton.setAttribute('aria-label', isVisible ? 'Mostrar senha' : 'Ocultar senha');
+            visibilityButton.setAttribute('aria-pressed', String(!isVisible));
+            visibilityButton.innerHTML = `<i class="bi ${isVisible ? 'bi-eye' : 'bi-eye-slash'}" aria-hidden="true"></i>`;
+        });
+        wrapper.append(visibilityButton);
+    });
+
+    const notificationCount = document.getElementById('chatNotificationCount');
+    const notificationList = document.getElementById('chatNotificationList');
+    const notificationEmpty = document.getElementById('chatNotificationEmpty');
+    if (notificationCount && notificationList && notificationEmpty) {
+        const atualizarNotificacoes = async () => {
+            try {
+                const response = await fetch('/igor_tcc_teste/api/chat.php?action=notificacoes', {
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                notificationCount.textContent = data.total > 99 ? '99+' : String(data.total);
+                notificationCount.hidden = data.total === 0;
+                notificationEmpty.hidden = data.notificacoes.length > 0;
+                notificationList.querySelectorAll('[data-chat-notification]').forEach(item => item.remove());
+
+                data.notificacoes.forEach(item => {
+                    const row = document.createElement('li');
+                    row.dataset.chatNotification = 'true';
+                    const link = document.createElement('a');
+                    link.className = 'dropdown-item chat-notification-item';
+                    link.href = `/igor_tcc_teste/public/chat.php?conversa_id=${encodeURIComponent(item.conversa_id)}`;
+                    const sender = document.createElement('strong');
+                    sender.textContent = item.remetente_nome;
+                    const preview = document.createElement('span');
+                    preview.textContent = item.conteudo;
+                    link.append(sender, preview);
+                    row.append(link);
+                    notificationEmpty.after(row);
+                });
+            } catch (error) {
+                console.warn('Não foi possível atualizar as notificações do chat.', error);
+            }
+        };
+
+        atualizarNotificacoes();
+        window.setInterval(atualizarNotificacoes, 10000);
     }
 
     const themeToggle = document.getElementById('themeToggle');

@@ -7,6 +7,11 @@ USE mathplay;
 SET NAMES utf8mb4;
 
 -- Remove tabelas antigas para permitir uma instalação limpa.
+DROP TABLE IF EXISTS mensagens;
+DROP TABLE IF EXISTS conversas;
+DROP TABLE IF EXISTS usuario_itens;
+DROP TABLE IF EXISTS itens;
+DROP TABLE IF EXISTS fases;
 DROP TABLE IF EXISTS usuario_conquistas;
 DROP TABLE IF EXISTS conquistas;
 DROP TABLE IF EXISTS respostas;
@@ -18,7 +23,7 @@ DROP TABLE IF EXISTS recuperacao_senhas;
 DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS configuracoes;
 
--- Guarda os dados de login, série, XP, nível e pontuação dos alunos.
+-- Guarda os dados de login, série, XP, nível e fase dos alunos.
 CREATE TABLE usuarios (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nome VARCHAR(255) NOT NULL,
@@ -29,11 +34,39 @@ CREATE TABLE usuarios (
     ano_escolar TINYINT NOT NULL,
     xp INT NOT NULL DEFAULT 0,
     nivel INT NOT NULL DEFAULT 1,
+    fase INT NOT NULL DEFAULT 1,
     pontos INT NOT NULL DEFAULT 0,
     avatar VARCHAR(255) DEFAULT NULL,
     ativo TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_materias_ano_nome (ano_escolar, nome)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Mantém uma conversa privada por par de alunos/professor.
+CREATE TABLE conversas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_a_id INT NOT NULL,
+    usuario_b_id INT NOT NULL,
+    criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_conversa_participantes (usuario_a_id, usuario_b_id),
+    KEY idx_conversas_usuario_b (usuario_b_id, atualizada_em),
+    CONSTRAINT fk_conversas_usuario_a FOREIGN KEY (usuario_a_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    CONSTRAINT fk_conversas_usuario_b FOREIGN KEY (usuario_b_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Armazena mensagens e o estado de leitura para notificações privadas.
+CREATE TABLE mensagens (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    conversa_id INT NOT NULL,
+    remetente_id INT NOT NULL,
+    conteudo VARCHAR(2000) NOT NULL,
+    enviada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    lida_em TIMESTAMP NULL DEFAULT NULL,
+    KEY idx_mensagens_conversa (conversa_id, id),
+    KEY idx_mensagens_nao_lidas (conversa_id, remetente_id, lida_em),
+    CONSTRAINT fk_mensagens_conversa FOREIGN KEY (conversa_id) REFERENCES conversas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_mensagens_remetente FOREIGN KEY (remetente_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Armazena tokens temporários usados para redefinir senhas.
@@ -45,6 +78,14 @@ CREATE TABLE recuperacao_senhas (
     usado TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_recuperacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Guarda os limites de XP de cada fase.
+CREATE TABLE fases (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    xp_min INT NOT NULL DEFAULT 0,
+    xp_max INT NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Guarda as matérias disponíveis por série escolar.
@@ -75,6 +116,14 @@ CREATE TABLE questoes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_questoes_materia FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO fases (nome, xp_min, xp_max) VALUES
+('Iniciante', 0, 499),
+('Explorador', 500, 999),
+('Desafiador', 1000, 1499),
+('Estratégico', 1500, 1999),
+('Galático', 2000, 2499),
+('Lendário', 2500, 999999);
 
 -- Guarda o resumo de cada partida e seus resultados.
 CREATE TABLE partidas (
@@ -457,5 +506,12 @@ INSERT INTO questoes (materia_id, ano_escolar, dificuldade, enunciado, alternati
 SELECT m.id, 6, 'Difícil', 'Qual é o valor de 2/3 × 3/4?', '1/2', '2/3', '3/4', '1/4', 'A', '2/3 × 3/4 = 6/12 = 1/2.', 1
 FROM materias m WHERE m.nome = 'Frações' LIMIT 1;
 
+-- Corrige os IDs de matéria deslocados na carga inicial e mantém cada questão na série correta.
+UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Números inteiros' AND m.ano_escolar = 7 AND m.ativo = 1) WHERE q.id IN (45, 46, 47) AND q.ano_escolar = 7;
+UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Potenciação' AND m.ano_escolar = 8 AND m.ativo = 1) WHERE q.id IN (69, 70, 71) AND q.ano_escolar = 8;
+UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Radiciação' AND m.ano_escolar = 9 AND m.ativo = 1) WHERE q.id IN (99, 135) AND q.ano_escolar = 9;
+UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Potenciação' AND m.ano_escolar = 9 AND m.ativo = 1) WHERE q.id IN (100, 101, 136) AND q.ano_escolar = 9;
+UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Equação do 2º grau' AND m.ano_escolar = 9 AND m.ativo = 1) WHERE q.id IN (102, 103, 104, 137) AND q.ano_escolar = 9;
+UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Operações básicas' AND m.ano_escolar = 6 AND m.ativo = 1) WHERE q.id BETWEEN 123 AND 128 AND q.ano_escolar = 6;
 
 SELECT 'Banco Mathematics Education inicializado com sucesso.' AS status;

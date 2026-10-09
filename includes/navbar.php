@@ -11,7 +11,6 @@ $activePage = basename($_SERVER['PHP_SELF']);
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
     <div class="container">
         <a class="navbar-brand" href="<?php echo is_logged_in() ? '/igor_tcc_teste/public/dashboard.php' : '/igor_tcc_teste/public/login.php'; ?>">
-            <span class="brand-mark">🎓</span>
             Mathematics Education
         </a>
 
@@ -23,31 +22,31 @@ $activePage = basename($_SERVER['PHP_SELF']);
             <?php if (is_logged_in()): ?>
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <?php if (($user['tipo'] ?? '') === 'professor'): ?>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'index.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/professor/index.php">📊 Acompanhamento</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'index.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/professor/index.php">Acompanhamento</a></li>
                     <?php else: ?>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'dashboard.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/dashboard.php">🏠 Início</a></li>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'materias.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/materias.php">📚 Matérias</a></li>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'ranking.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/ranking.php">🏆 Ranking</a></li>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'desempenho.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/desempenho.php">📊 Desempenho</a></li>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'historico.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/historico.php">📜 Histórico</a></li>
-                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'perfil.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/perfil.php">👤 Perfil</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'dashboard.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/dashboard.php">Início</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'materias.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/materias.php">Matérias</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'ranking.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/ranking.php">Ranking</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'desempenho.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/desempenho.php">Desempenho</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'historico.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/historico.php">Histórico</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo $activePage === 'perfil.php' ? 'active' : ''; ?>" href="/igor_tcc_teste/public/perfil.php">Perfil</a></li>
                     <?php endif; ?>
                     <?php if (!empty($user) && $user['tipo'] === 'admin'): ?>
-                        <li class="nav-item"><a class="nav-link <?php echo in_array($activePage, ['index.php','usuarios.php','questoes.php','materias.php','desempenho.php','partidas.php']) ? 'active' : ''; ?>" href="/igor_tcc_teste/admin/index.php">⚙️ Admin</a></li>
+                        <li class="nav-item"><a class="nav-link <?php echo in_array($activePage, ['index.php','usuarios.php','questoes.php','materias.php','desempenho.php','partidas.php']) ? 'active' : ''; ?>" href="/igor_tcc_teste/admin/index.php">Admin</a></li>
                     <?php endif; ?>
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                     <div class="user-pill">
                         <span class="avatar-mini">
                             <?php if ($avatarUrl = avatar_url($user['avatar'] ?? '')): ?>
-                                <img src="<?php echo e($avatarUrl); ?>" alt="Foto de perfil">
+                                <img src="<?php echo e($avatarUrl); ?>" alt="Foto de perfil de <?php echo e($user['nome'] ?? 'Usuário'); ?>">
                             <?php else: ?>
                                 <?php echo strtoupper(substr($user['nome'] ?? 'U', 0, 1)); ?>
                             <?php endif; ?>
                         </span>
                         <span><?php echo e($user['nome'] ?? 'Usuário'); ?></span>
                     </div>
-                    <a href="/igor_tcc_teste/public/logout.php" class="btn btn-outline-light btn-sm">🚪 Sair</a>
+                    <a href="/igor_tcc_teste/public/logout.php" class="btn btn-outline-light btn-sm">Sair</a>
                 </div>
             <?php endif; ?>
         </div>

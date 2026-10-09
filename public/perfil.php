@@ -65,6 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nova_senha'])) {
                 </div>
                 <h3 class="mt-3"><?php echo e($user['nome']); ?></h3>
                 <p class="text-muted mb-0">@<?php echo e($user['username']); ?></p>
+                <div class="mt-3 d-flex justify-content-center gap-2 flex-wrap">
+                    <span class="mini-badge">Fase <?php echo (int) ($user['fase'] ?? get_fase_por_xp((int) ($user['xp'] ?? 0))); ?></span>
+                </div>
             </div>
         </div>
 

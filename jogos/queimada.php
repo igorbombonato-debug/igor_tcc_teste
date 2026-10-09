@@ -439,6 +439,9 @@ if ($questaoAtual) {
                 if (respostasComErro) {
                     throw new Error('O resultado foi salvo, mas algumas respostas não puderam ser registradas.');
                 }
+                if (resultado.fase_alcancada) {
+                    window.mostrarCelebracaoFase(resultado.fase_alcancada);
+                }
             })
             .catch(error => {
                 const status = document.getElementById('salvamentoStatus');

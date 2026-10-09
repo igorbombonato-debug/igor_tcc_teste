@@ -55,6 +55,41 @@ function get_nivel_threshold(int $nivel): int
     return max(($nivel - 1) * 500, 0);
 }
 
+// Mantém a ideia de fase e nível alinhadas ao mesmo sistema de progresso do jogo.
+function get_fase_por_xp(int $xp): int
+{
+    return get_nivel_por_xp($xp);
+}
+
+function get_fase_nome(int $fase): string
+{
+    $nomes = [
+        1 => 'Iniciante',
+        2 => 'Explorador',
+        3 => 'Desafiador',
+        4 => 'Estratégico',
+        5 => 'Galático',
+        6 => 'Lendário',
+    ];
+
+    return $nomes[$fase] ?? 'Elite';
+}
+
+function get_fase_info(int $xp): array
+{
+    $fase = get_fase_por_xp($xp);
+    $inicio = get_nivel_threshold($fase);
+    $meta = max($fase * 500, 500);
+
+    return [
+        'fase' => $fase,
+        'nome' => get_fase_nome($fase),
+        'inicio' => $inicio,
+        'meta' => $meta,
+        'proximo' => max($meta - $xp, 0),
+    ];
+}
+
 // Calcula o percentual sem dividir por zero quando não há questões respondidas.
 function calcular_percentual(int $acertos, int $total): int
 {
@@ -95,12 +130,13 @@ function obter_materias($ano = null): array
                 FROM materias
                 WHERE ativo = 1
                 GROUP BY ano_escolar, nome
-            ) unicas ON unicas.id = m.id';
+            ) unicas ON unicas.id = m.id
+            WHERE m.ativo = 1';
     $params = [];
 
     // O filtro é opcional para permitir listar matérias de todas as séries.
     if ($ano !== null) {
-        $sql .= ' AND ano_escolar = :ano';
+        $sql .= ' AND m.ano_escolar = :ano';
         $params['ano'] = $ano;
     }
 
@@ -116,17 +152,19 @@ function obter_questoes_por_ano($ano, $dificuldade = null, $materiaId = null): a
 {
     global $pdo;
 
-    $sql = 'SELECT * FROM questoes WHERE ativo = 1 AND ano_escolar = :ano';
+        $sql = 'SELECT q.* FROM questoes q
+            INNER JOIN materias m ON m.id = q.materia_id AND m.ano_escolar = q.ano_escolar
+            WHERE q.ativo = 1 AND m.ativo = 1 AND q.ano_escolar = :ano';
     $params = ['ano' => $ano];
 
     // Cada filtro acrescenta sua condição e parâmetro somente quando informado.
     if ($dificuldade) {
-        $sql .= ' AND dificuldade = :dificuldade';
+        $sql .= ' AND q.dificuldade = :dificuldade';
         $params['dificuldade'] = $dificuldade;
     }
 
     if ($materiaId) {
-        $sql .= ' AND materia_id = :materia_id';
+        $sql .= ' AND q.materia_id = :materia_id';
         $params['materia_id'] = $materiaId;
     }
 
@@ -183,28 +221,39 @@ function registrar_partida(array $dados): int
 }
 
 // Atualiza XP e nível a partir do total acumulado após a partida.
-function atualizar_xp_e_nivel(int $usuarioId, int $xpGanho): void
+function atualizar_xp_e_nivel(int $usuarioId, int $xpGanho): array
 {
     global $pdo;
 
-    $usuario = $pdo->prepare('SELECT xp, nivel, pontos FROM usuarios WHERE id = :id LIMIT 1');
+    $usuario = $pdo->prepare('SELECT xp FROM usuarios WHERE id = :id LIMIT 1');
     $usuario->execute(['id' => $usuarioId]);
     $dados = $usuario->fetch();
 
     // A conta pode ter sido removida; nesse caso não há progresso para atualizar.
     if (!$dados) {
-        return;
+        return ['mudou_fase' => false, 'fase_anterior' => 0, 'fase_nova' => 0, 'nome_fase' => ''];
     }
 
-    $novoXp = (int) $dados['xp'] + $xpGanho;
+    $xpAnterior = (int) $dados['xp'];
+    $faseAnterior = get_fase_por_xp($xpAnterior);
+    $novoXp = $xpAnterior + $xpGanho;
     $novoNivel = get_nivel_por_xp($novoXp);
+    $novaFase = get_fase_por_xp($novoXp);
 
-    $stmt = $pdo->prepare('UPDATE usuarios SET xp = :xp, nivel = :nivel WHERE id = :id');
+    $stmt = $pdo->prepare('UPDATE usuarios SET xp = :xp, nivel = :nivel, fase = :fase WHERE id = :id');
     $stmt->execute([
         'xp' => $novoXp,
         'nivel' => $novoNivel,
+        'fase' => $novaFase,
         'id' => $usuarioId,
     ]);
+
+    return [
+        'mudou_fase' => $novaFase > $faseAnterior,
+        'fase_anterior' => $faseAnterior,
+        'fase_nova' => $novaFase,
+        'nome_fase' => get_fase_nome($novaFase),
+    ];
 }
 
 // Soma pontos à pontuação atual do usuário.

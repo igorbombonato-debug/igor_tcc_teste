@@ -3,24 +3,52 @@
 // O resultado, incluindo as alternativas, é retornado como JSON.
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../config/database.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$ano = isset($_GET['ano']) ? (int) $_GET['ano'] : 6;
+require_once __DIR__ . '/../includes/functions.php';
+
+$usuarioId = (int) ($_SESSION['user_id'] ?? 0);
+$usuarioStmt = $pdo->prepare('SELECT id, ano_escolar FROM usuarios WHERE id = :id AND tipo = \'aluno\' AND ativo = 1 LIMIT 1');
+$usuarioStmt->execute(['id' => $usuarioId]);
+$usuario = $usuarioStmt->fetch();
+if (!$usuario) {
+    http_response_code($usuarioId > 0 ? 403 : 401);
+    echo json_encode(['success' => false, 'message' => 'Acesso não autorizado.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$ano = (int) $usuario['ano_escolar'];
 $materiaId = isset($_GET['materia_id']) ? (int) $_GET['materia_id'] : 0;
 $dificuldade = $_GET['dificuldade'] ?? null;
+if ($dificuldade !== null && !in_array($dificuldade, ['Fácil', 'Médio', 'Difícil'], true)) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Dificuldade inválida.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
-// A consulta sempre limita a busca a questões ativas da série informada.
-$sql = 'SELECT * FROM questoes WHERE ativo = 1 AND ano_escolar = :ano';
+// O ano vem da conta autenticada; matéria e questão devem pertencer à mesma série.
+$sql = 'SELECT q.* FROM questoes q
+        INNER JOIN materias m ON m.id = q.materia_id AND m.ano_escolar = q.ano_escolar
+        WHERE q.ativo = 1 AND m.ativo = 1 AND q.ano_escolar = :ano';
 $params = ['ano' => $ano];
 
-// Só acrescenta filtros opcionais quando seus valores foram informados.
 if ($materiaId > 0) {
-    $sql .= ' AND materia_id = :materia_id';
+    $materiaStmt = $pdo->prepare('SELECT id FROM materias WHERE id = :id AND ano_escolar = :ano AND ativo = 1 LIMIT 1');
+    $materiaStmt->execute(['id' => $materiaId, 'ano' => $ano]);
+    if (!$materiaStmt->fetch()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Esta matéria não pertence à sua série.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $sql .= ' AND q.materia_id = :materia_id';
     $params['materia_id'] = $materiaId;
 }
 
 if ($dificuldade) {
-    $sql .= ' AND dificuldade = :dificuldade';
+    $sql .= ' AND q.dificuldade = :dificuldade';
     $params['dificuldade'] = $dificuldade;
 }
 

@@ -24,6 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         $resposta = strtoupper(trim($_POST['resposta_correta'] ?? 'A'));
         $exp = trim($_POST['explicacao'] ?? '');
 
+        $materiaStmt = $pdo->prepare('SELECT ano_escolar FROM materias WHERE id = :id AND ativo = 1 LIMIT 1');
+        $materiaStmt->execute(['id' => $materiaId]);
+        $materiaSelecionada = $materiaStmt->fetch();
+        if (!$materiaSelecionada) {
+            http_response_code(422);
+            exit('Selecione uma matéria ativa.');
+        }
+        $ano = (int) $materiaSelecionada['ano_escolar'];
+
         // Um ID existente significa edição; sem ID, uma nova questão é criada.
         if ($id > 0) {
             $stmt = $pdo->prepare('UPDATE questoes SET materia_id = :materia_id, ano_escolar = :ano_escolar, dificuldade = :dificuldade, enunciado = :enunciado, alternativa_a = :a, alternativa_b = :b, alternativa_c = :c, alternativa_d = :d, resposta_correta = :resposta, explicacao = :exp WHERE id = :id');
@@ -81,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 // A tela mostra até 100 questões recentes e oferece apenas matérias ativas
 // para seleção no formulário de cadastro.
 $questoes = $pdo->query('SELECT q.*, m.nome as materia_nome FROM questoes q LEFT JOIN materias m ON m.id = q.materia_id ORDER BY q.id DESC LIMIT 100')->fetchAll();
-$materias = $pdo->query('SELECT * FROM materias WHERE ativo = 1 ORDER BY nome ASC')->fetchAll();
+$materias = $pdo->query('SELECT * FROM materias WHERE ativo = 1 ORDER BY ano_escolar ASC, nome ASC')->fetchAll();
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
 <section class="container page-section">
@@ -95,8 +104,8 @@ $materias = $pdo->query('SELECT * FROM materias WHERE ativo = 1 ORDER BY nome AS
         <form method="POST" class="row g-3 mt-2">
             <input type="hidden" name="acao" value="salvar">
             <div class="col-md-3">
-                <label class="form-label">Ano</label>
-                <select name="ano_escolar" class="form-select">
+                <label class="form-label" for="questaoAnoEscolar">Ano escolar</label>
+                <select id="questaoAnoEscolar" name="ano_escolar" class="form-select">
                     <option value="6">6º ano</option>
                     <option value="7">7º ano</option>
                     <option value="8">8º ano</option>
@@ -104,10 +113,10 @@ $materias = $pdo->query('SELECT * FROM materias WHERE ativo = 1 ORDER BY nome AS
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Matéria</label>
-                <select name="materia_id" class="form-select">
+                <label class="form-label" for="questaoMateria">Matéria</label>
+                <select id="questaoMateria" name="materia_id" class="form-select" required>
                     <?php foreach ($materias as $materia): ?>
-                        <option value="<?php echo (int) $materia['id']; ?>"><?php echo e($materia['nome']); ?></option>
+                        <option value="<?php echo (int) $materia['id']; ?>" data-ano="<?php echo (int) $materia['ano_escolar']; ?>"><?php echo e($materia['nome']); ?> · <?php echo (int) $materia['ano_escolar']; ?>º</option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -184,4 +193,27 @@ $materias = $pdo->query('SELECT * FROM materias WHERE ativo = 1 ORDER BY nome AS
         </table>
     </div>
 </section>
+<script>
+    const anoQuestaoSelect = document.getElementById('questaoAnoEscolar');
+    const materiaQuestaoSelect = document.getElementById('questaoMateria');
+
+    function filtrarMateriasPorAno() {
+        const materiasValidas = [...materiaQuestaoSelect.options].filter(option => option.dataset.ano === anoQuestaoSelect.value);
+        materiaQuestaoSelect.querySelectorAll('option').forEach(option => {
+            option.hidden = option.dataset.ano !== anoQuestaoSelect.value;
+            option.disabled = option.hidden;
+        });
+        if (!materiasValidas.some(option => option.value === materiaQuestaoSelect.value)) {
+            materiaQuestaoSelect.value = materiasValidas[0]?.value || '';
+        }
+    }
+
+    anoQuestaoSelect.addEventListener('change', filtrarMateriasPorAno);
+    materiaQuestaoSelect.addEventListener('change', () => {
+        const materia = materiaQuestaoSelect.selectedOptions[0];
+        if (materia) anoQuestaoSelect.value = materia.dataset.ano;
+        filtrarMateriasPorAno();
+    });
+    filtrarMateriasPorAno();
+</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

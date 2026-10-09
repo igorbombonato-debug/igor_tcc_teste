@@ -7,6 +7,11 @@ redirect_if_logged_in();
 $pageTitle = 'Cadastro | Mathematics Education';
 $error = '';
 $success = '';
+$nome = '';
+$username = '';
+$email = '';
+$ano = 6;
+$campoInvalido = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Normaliza os campos de texto e aplica valores padrão aos dados opcionais.
@@ -15,21 +20,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
     $confirmar = $_POST['confirmar_senha'] ?? '';
-    $ano = (int) ($_POST['ano_escolar'] ?? 6);
+    $anoInformado = (int) ($_POST['ano_escolar'] ?? 6);
+    $ano = in_array($anoInformado, [6, 7, 8, 9], true) ? $anoInformado : 6;
 
     // As validações em sequência interrompem o cadastro no primeiro problema encontrado.
     if ($nome === '' || $username === '' || $email === '' || $senha === '' || $confirmar === '') {
         $error = 'Todos os campos são obrigatórios.';
+        $campoInvalido = $nome === '' ? 'nome' : ($username === '' ? 'username' : ($email === '' ? 'email' : ($senha === '' ? 'senha' : 'confirmar_senha')));
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Informe um e-mail válido.';
+        $email = '';
+        $campoInvalido = 'email';
     } elseif (strlen($senha) < 6) {
         $error = 'A senha deve conter no mínimo 6 caracteres.';
+        $campoInvalido = 'senha';
     } elseif ($senha !== $confirmar) {
         $error = 'As senhas não conferem.';
+        $campoInvalido = 'confirmar_senha';
     } elseif (buscar_usuario_por_email($email)) {
         $error = 'Este e-mail já está cadastrado.';
+        $email = '';
+        $campoInvalido = 'email';
     } elseif (buscar_usuario_por_username($username)) {
         $error = 'Este username já existe.';
+        $username = '';
+        $campoInvalido = 'username';
     } else {
         // Nunca armazena a senha em texto puro: salva somente o hash seguro.
         $hash = password_hash($senha, PASSWORD_DEFAULT);
@@ -75,32 +90,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Nome</label>
-                    <input type="text" name="nome" class="form-control" required>
+                    <input type="text" name="nome" class="form-control" value="<?php echo e($nome); ?>" <?php echo $campoInvalido === 'nome' ? 'autofocus' : ''; ?> required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control" required>
+                    <input type="text" name="username" class="form-control" value="<?php echo e($username); ?>" <?php echo $campoInvalido === 'username' ? 'autofocus' : ''; ?> required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">E-mail</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <input type="email" name="email" class="form-control" value="<?php echo e($email); ?>" <?php echo $campoInvalido === 'email' ? 'autofocus' : ''; ?> required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Ano escolar</label>
                     <select name="ano_escolar" class="form-select" required>
-                        <option value="6">6º ano</option>
-                        <option value="7">7º ano</option>
-                        <option value="8">8º ano</option>
-                        <option value="9">9º ano</option>
+                        <option value="6" <?php echo $ano === 6 ? 'selected' : ''; ?>>6º ano</option>
+                        <option value="7" <?php echo $ano === 7 ? 'selected' : ''; ?>>7º ano</option>
+                        <option value="8" <?php echo $ano === 8 ? 'selected' : ''; ?>>8º ano</option>
+                        <option value="9" <?php echo $ano === 9 ? 'selected' : ''; ?>>9º ano</option>
                     </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Senha</label>
-                    <input type="password" name="senha" class="form-control" required>
+                    <input type="password" name="senha" class="form-control" <?php echo $campoInvalido === 'senha' ? 'autofocus' : ''; ?> required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Confirmar senha</label>
-                    <input type="password" name="confirmar_senha" class="form-control" required>
+                    <input type="password" name="confirmar_senha" class="form-control" <?php echo $campoInvalido === 'confirmar_senha' ? 'autofocus' : ''; ?> required>
                 </div>
                 <div class="col-12">
                     <button class="btn btn-primary w-100">Criar conta</button>

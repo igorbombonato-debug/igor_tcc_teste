@@ -31,18 +31,53 @@ if ($usuarioId <= 0) {
     exit;
 }
 
-$stmt = $pdo->prepare('SELECT id FROM usuarios WHERE id = :id AND tipo IN (\'aluno\', \'admin\') AND ativo = 1 LIMIT 1');
+$stmt = $pdo->prepare('SELECT id, tipo, ano_escolar FROM usuarios WHERE id = :id AND tipo IN (\'aluno\', \'admin\') AND ativo = 1 LIMIT 1');
 $stmt->execute(['id' => $usuarioId]);
-if (!$stmt->fetch()) {
+$usuario = $stmt->fetch();
+if (!$usuario) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Este perfil não pode registrar resultados de jogos.']);
     exit;
 }
 
-// Normaliza os dados da resposta recebida.
-$materiaId = (int) ($data['materia_id'] ?? $partida['materia_id'] ?? 1);
-$materiaId = $materiaId > 0 ? $materiaId : 1;
+// Alunos usam a série gravada na conta; admins precisam informar uma série válida.
+$anoEscolarPermitido = $usuario['tipo'] === 'aluno'
+    ? (int) $usuario['ano_escolar']
+    : (int) ($data['ano_escolar'] ?? $partida['ano_escolar'] ?? 0);
+if ($anoEscolarPermitido <= 0) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Série escolar inválida.']);
+    exit;
+}
+
+// Normaliza os dados e confirma que a matéria pertence à série autorizada.
+$materiaId = (int) ($data['materia_id'] ?? $partida['materia_id'] ?? 0);
+if ($materiaId <= 0) {
+    $materiaPadrao = $pdo->prepare('SELECT id FROM materias WHERE ano_escolar = :ano AND ativo = 1 ORDER BY id LIMIT 1');
+    $materiaPadrao->execute(['ano' => $anoEscolarPermitido]);
+    $materiaId = (int) $materiaPadrao->fetchColumn();
+}
+$materiaValida = $pdo->prepare('SELECT id FROM materias WHERE id = :id AND ano_escolar = :ano AND ativo = 1 LIMIT 1');
+$materiaValida->execute(['id' => $materiaId, 'ano' => $anoEscolarPermitido]);
+if (!$materiaValida->fetch()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Esta matéria não pertence à sua série.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $questaoId = isset($data['questao_id']) ? (int) $data['questao_id'] : 0;
+if ($questaoId > 0) {
+    $questaoValida = $pdo->prepare('SELECT q.id FROM questoes q
+        INNER JOIN materias m ON m.id = q.materia_id AND m.ano_escolar = q.ano_escolar
+        WHERE q.id = :questao_id AND q.materia_id = :materia_id AND q.ano_escolar = :ano
+          AND q.ativo = 1 AND m.ativo = 1 LIMIT 1');
+    $questaoValida->execute(['questao_id' => $questaoId, 'materia_id' => $materiaId, 'ano' => $anoEscolarPermitido]);
+    if (!$questaoValida->fetch()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'A questão não pertence à matéria e série selecionadas.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
 $respostaUsuario = isset($data['resposta_usuario']) ? strtoupper((string) $data['resposta_usuario']) : null;
 $respostaCorreta = isset($data['resposta_correta']) ? trim((string) $data['resposta_correta']) : null;
 $enunciadoSnapshot = isset($data['questao_enunciado']) ? trim((string) $data['questao_enunciado']) : null;
@@ -66,7 +101,7 @@ if ($finalizar) {
     $erros = (int) ($data['erros'] ?? $partida['erros'] ?? 0);
     $totalQuestoes = (int) ($data['total_questoes'] ?? $partida['total_questoes'] ?? 0);
     $tempo = (int) ($data['tempo'] ?? $partida['tempo'] ?? 0);
-    $anoEscolar = (int) ($data['ano_escolar'] ?? $partida['ano_escolar'] ?? 0);
+    $anoEscolar = $anoEscolarPermitido;
     $equipeNomes = isset($data['equipe_nomes']) ? json_encode($data['equipe_nomes'], JSON_UNESCAPED_UNICODE) : null;
 
     // Atualiza a partida já criada durante as respostas ou cria uma nova.
@@ -125,14 +160,22 @@ if ($finalizar) {
         }
     }
 
-    // Atualiza XP, nível, pontos e desempenho do aluno no fechamento.
-    atualizar_xp_e_nivel($usuarioId, $xpGanho);
+    // Atualiza XP, nível, fase, pontos e desempenho do aluno no fechamento.
+    $progresso = atualizar_xp_e_nivel($usuarioId, $xpGanho);
     atualizar_pontos($usuarioId, $pontuacao);
     atualizar_desempenho_usuario($usuarioId, $materiaId, $acertos, $erros);
     // Libera a sessão para que a próxima partida seja independente.
     unset($_SESSION['partida_atual']);
 
-    echo json_encode(['success' => true, 'partida_id' => $partidaId, 'finalizado' => true]);
+    $faseAlcancada = $progresso['mudou_fase']
+        ? ['numero' => $progresso['fase_nova'], 'nome' => $progresso['nome_fase']]
+        : null;
+    echo json_encode([
+        'success' => true,
+        'partida_id' => $partidaId,
+        'finalizado' => true,
+        'fase_alcancada' => $faseAlcancada,
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -144,6 +187,7 @@ if ($partidaId <= 0) {
         'usuario_id' => $usuarioId,
         'jogo' => $data['jogo'] ?? $partida['jogo'] ?? 'queimada',
         'materia_id' => $materiaId,
+        'ano_escolar' => $anoEscolarPermitido,
         'dificuldade' => $data['dificuldade'] ?? $partida['dificuldade'] ?? 'Médio',
         'pontuacao' => 0,
         'xp_ganho' => 0,
