@@ -14,6 +14,53 @@ $materiaSolicitada = (int) ($_GET['materia_id'] ?? 0);
 $materiaId = in_array($materiaSolicitada, $materiaIds, true)
     ? $materiaSolicitada
     : (int) ($materiaIds[0] ?? 0);
+
+$questoes = obter_questoes_por_ano($ano, null, $materiaId ?: null);
+if (empty($questoes)) {
+    $questoes = obter_questoes_por_ano($ano);
+}
+$questoes = array_slice($questoes, 0, 8);
+
+$cartasBase = [];
+foreach ($questoes as $questao) {
+    $respostaCorreta = $questao['resposta_correta'] ?? 'A';
+    $textoResposta = '';
+
+    switch (strtoupper($respostaCorreta)) {
+        case 'A':
+            $textoResposta = $questao['alternativa_a'] ?? '';
+            break;
+        case 'B':
+            $textoResposta = $questao['alternativa_b'] ?? '';
+            break;
+        case 'C':
+            $textoResposta = $questao['alternativa_c'] ?? '';
+            break;
+        case 'D':
+            $textoResposta = $questao['alternativa_d'] ?? '';
+            break;
+        default:
+            $textoResposta = $questao['alternativa_a'] ?? '';
+            break;
+    }
+
+    if ($questao['enunciado'] && $textoResposta) {
+        $cartasBase[] = [
+            'id' => (int) $questao['id'],
+            'pergunta' => $questao['enunciado'],
+            'resposta' => $textoResposta,
+        ];
+    }
+}
+
+if (count($cartasBase) < 2) {
+    $cartasBase = [
+        ['id' => 1, 'pergunta' => 'Qual é o valor de 6 × 8?', 'resposta' => '48'],
+        ['id' => 2, 'pergunta' => 'Quanto vale 1/2 em porcentagem?', 'resposta' => '50%'],
+        ['id' => 3, 'pergunta' => 'Se x + 3 = 7, qual é o valor de x?', 'resposta' => '4'],
+        ['id' => 4, 'pergunta' => 'Qual é o valor de 2²?', 'resposta' => '4'],
+    ];
+}
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
 <link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=8">
@@ -54,16 +101,7 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
     const anoEscolar = <?php echo (int) $user['ano_escolar']; ?>;
     const materiaId = <?php echo $materiaId; ?>;
     const nomeUsuario = <?php echo json_encode($user['nome'], JSON_UNESCAPED_UNICODE); ?>;
-    const cartasBase = [
-        { id: 1, texto: '6 × 8', valor: '48' },
-        { id: 2, texto: '1/2', valor: '50%' },
-        { id: 3, texto: 'x + 3 = 7', valor: '4' },
-        { id: 4, texto: '2²', valor: '4' },
-        { id: 5, texto: '√9', valor: '3' },
-        { id: 6, texto: '25%', valor: '1/4' },
-        { id: 7, texto: '3 × 5', valor: '15' },
-        { id: 8, texto: '8 - 2', valor: '6' }
-    ];
+    const cartasBase = <?php echo json_encode($cartasBase, JSON_UNESCAPED_UNICODE); ?>;
 
     // Estado do tabuleiro, pontuação e cronômetro de cinco minutos.
     let deck = [];
@@ -84,10 +122,28 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
         return [...array].sort(() => Math.random() - 0.5);
     }
 
-    // Cria os pares, desenha o tabuleiro e inicia o tempo.
+    // Cria os pares pergunta x resposta, desenha o tabuleiro e inicia o tempo.
     function criarDeck() {
-        const pares = embaralhar([...cartasBase, ...cartasBase]).map((item, index) => ({ ...item, uniqueId: index }));
-        deck = pares;
+        const pares = [];
+
+        cartasBase.forEach((item) => {
+            pares.push({
+                id: `${item.id}-pergunta`,
+                pairId: item.id,
+                tipo: 'pergunta',
+                texto: item.pergunta,
+                matchKey: item.id
+            });
+            pares.push({
+                id: `${item.id}-resposta`,
+                pairId: item.id,
+                tipo: 'resposta',
+                texto: item.resposta,
+                matchKey: item.id
+            });
+        });
+
+        deck = embaralhar(pares);
         renderizarCartas();
         atualizarHud();
         iniciarCronometro();
@@ -97,7 +153,7 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
     function renderizarCartas() {
         const board = document.getElementById('memoryBoard');
         board.innerHTML = deck.map((carta) => `
-            <button class="memory-card" data-id="${carta.uniqueId}" data-valor="${carta.valor}">
+            <button class="memory-card" data-id="${carta.id}" data-match-key="${carta.matchKey}" data-tipo="${carta.tipo}">
                 <span class="card-front">?</span>
                 <span class="card-back">${carta.texto}</span>
             </button>
@@ -108,29 +164,30 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
         });
     }
 
-    // Revela cartas, compara pares e soma pontos quando há acerto.
+    // Revela cartas, compara pergunta com resposta e soma pontos quando há acerto.
     function flipCard(card) {
         if (travado || card.classList.contains('matched') || card.classList.contains('revealed')) return;
 
         card.classList.add('revealed');
-        const valor = card.dataset.valor;
+        const matchKey = Number(card.dataset.matchKey);
+        const tipo = card.dataset.tipo;
         if (!primeiro) {
-            primeiro = { card, valor };
+            primeiro = { card, matchKey, tipo };
             return;
         }
 
-        segundo = { card, valor };
+        segundo = { card, matchKey, tipo };
         movimentos += 1;
         atualizarHud();
 
         const textoPrimeiraCarta = primeiro.card.querySelector('.card-back').textContent;
         const textoSegundaCarta = segundo.card.querySelector('.card-back').textContent;
-        // A comparação usa o resultado guardado na carta, não o texto que ela exibe.
-        const acertouPar = primeiro.valor === segundo.valor;
+        const acertouPar = primeiro.matchKey === segundo.matchKey && primeiro.tipo !== segundo.tipo;
+        const itemCarta = cartasBase.find((item) => Number(item.id) === matchKey) || { pergunta: 'Pergunta', resposta: 'Resposta' };
         tentativas.push({
-            enunciado: `Encontre a carta com o mesmo resultado de: ${textoPrimeiraCarta}`,
+            enunciado: itemCarta.pergunta || textoPrimeiraCarta,
             resposta_usuario: textoSegundaCarta,
-            resposta_correta: `Uma carta com resultado ${primeiro.valor}`,
+            resposta_correta: itemCarta.resposta || textoPrimeiraCarta,
             correta: acertouPar
         });
 
