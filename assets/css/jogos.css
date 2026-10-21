@@ -121,12 +121,12 @@
     display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); gap: 16px; background: rgba(255,255,255,0.8); padding: 18px; border-radius: 26px; box-shadow: 0 18px 46px rgba(59,76,150,0.08);
 }
 .memory-card {
-    position: relative; height: 120px; border: none; border-radius: 18px; background: linear-gradient(135deg, #4f6ef7, #7c5cff); color: white; cursor: pointer; font-weight: 700; font-size: 1.2rem; perspective: 800px; transition: transform 0.25s ease;
+    position: relative; height: 120px; border: none; border-radius: 18px; background: var(--mindplay-gradient); color: white; cursor: pointer; font-weight: 700; font-size: 1.2rem; perspective: 800px; transition: transform 0.25s ease;
 }
 .memory-card .card-front, .memory-card .card-back {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; border-radius: 18px; padding: 14px;
 }
-.memory-card .card-front { background: linear-gradient(135deg, #4f6ef7, #7c5cff); }
+.memory-card .card-front { background: var(--mindplay-gradient); }
 .memory-card .card-back { background: linear-gradient(135deg, #dff7ee, #edf5ff); color: #1b2847; transform: rotateY(180deg); }
 .memory-card.revealed .card-front { transform: rotateY(180deg); }
 .memory-card.revealed .card-back { transform: rotateY(0deg); }
@@ -134,7 +134,7 @@
 .memory-result-overlay { position: fixed; inset: 0; z-index: 1050; display: grid; place-items: center; padding: 20px; background: rgba(25,35,70,.58); backdrop-filter: blur(6px); }
 .memory-result-overlay[hidden] { display: none; }
 .memory-result-modal { width: min(100%, 460px); padding: 34px; border: 1px solid rgba(255,255,255,.8); border-radius: 26px; background: linear-gradient(145deg, #fff, #f5f7ff); box-shadow: 0 26px 70px rgba(20,30,70,.28); text-align: center; animation: memory-result-in .25s ease-out; }
-.memory-result-icon { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 16px; border-radius: 20px; background: linear-gradient(135deg, #e8edff, #dff7ee); color: #4f6ef7; font-size: 1.7rem; }
+.memory-result-icon { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 16px; border-radius: 20px; background: linear-gradient(135deg, #e6f8fc, #efe7fc); color: #397acb; font-size: 1.7rem; }
 .memory-result-modal h2 { margin: 16px 0 8px; color: #1f2a44; font-weight: 800; }
 .memory-result-modal p { margin-bottom: 22px; color: #667085; }
 .memory-result-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px; }

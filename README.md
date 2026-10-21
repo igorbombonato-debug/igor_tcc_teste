@@ -1,6 +1,6 @@
-# Mathematics Education
+# MindPlay
 
-Sistema web educacional para aprendizagem de matemática para alunos do 6º ao 9º ano. O nome exibido da aplicação é **Mathematics Education**. O projeto foi desenvolvido para rodar em ambientes locais como XAMPP/Laragon com PHP e MySQL.
+Sistema web educacional para aprendizagem de matemática para alunos do 6º ao 9º ano. O nome exibido da aplicação é **MindPlay**. O projeto foi desenvolvido para rodar em ambientes locais como XAMPP/Laragon com PHP e MySQL.
 
 ## Requisitos
 
@@ -70,12 +70,16 @@ Não existem credenciais padrão. Use a opção `Criar conta` na tela de login e
 - Login e cadastro de alunos e professores
 - Recuperação de senha por link temporário, válido por uma hora e de uso único
 - Painel do professor com acompanhamento dos jogos, desempenho e respostas de todos os alunos
-- Controles de acessibilidade para aumentar, diminuir e restaurar o tamanho do texto, com preferência salva no navegador
+- Controles compartilhados de acessibilidade: tamanho do texto, leitura em voz alta, sons de confirmação opcionais e tradutor VLibras
 - Painel do estudante com XP, nível e desempenho
 - Ranking geral e por ano escolar
 - Jogos: Queimada Matemática e Memória Matemática
 - Gestão de questões, matérias e usuários pelo painel administrativo
 - Registro de partidas, respostas e evolução do desempenho
+
+## Recursos de acessibilidade
+
+O painel flutuante, disponível nas páginas públicas, de aluno, professor e administração, permite ajustar o tamanho do texto, ler a página ou uma seleção em voz alta e ativar sons de confirmação. O widget oficial VLibras é incluído pelo rodapé compartilhado e pode traduzir textos sob demanda. A leitura em voz alta depende das vozes e do suporte do navegador; o VLibras depende de conexão com a internet.
 
 ## Observação
 

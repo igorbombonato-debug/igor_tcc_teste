@@ -31,7 +31,7 @@ function mathplay_mail_configuration(): array
         'username' => trim((string) (getenv($environmentPrefix . 'USERNAME') ?: ($providerSettings['username'] ?? ''))),
         'password' => (string) (getenv($environmentPrefix . 'PASSWORD') ?: ($providerSettings['password'] ?? '')),
         'from_address' => trim((string) (getenv($environmentPrefix . 'FROM_ADDRESS') ?: ($providerSettings['from_address'] ?? ''))),
-        'from_name' => trim((string) (getenv($environmentPrefix . 'FROM_NAME') ?: ($providerSettings['from_name'] ?? 'Mathematics Education'))),
+        'from_name' => trim((string) (getenv($environmentPrefix . 'FROM_NAME') ?: ($providerSettings['from_name'] ?? 'MindPlay'))),
         'base_url' => rtrim(trim((string) (getenv('MATHPLAY_BASE_URL') ?: ($localConfig['base_url'] ?? 'http://localhost/igor_tcc_teste'))), '/'),
     ];
 
@@ -65,23 +65,23 @@ function send_password_recovery_email(string $recipient, string $recipientName, 
     $mail->setFrom($config['from_address'], $config['from_name']);
     $mail->addAddress($recipient, $recipientName);
     $mail->isHTML(true);
-    $mail->Subject = 'Redefinição de senha - Mathematics Education';
+    $mail->Subject = 'Redefinição de senha - MindPlay';
     // Escapa os dados variáveis antes de inseri-los no conteúdo HTML.
     $safeName = htmlspecialchars($recipientName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $safeUrl = htmlspecialchars($recoveryUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $mail->Body = '<p>Olá, ' . $safeName . '.</p>'
-        . '<p>Recebemos uma solicitação para redefinir sua senha do Mathematics Education.</p>'
+        . '<p>Recebemos uma solicitação para redefinir sua senha do MindPlay.</p>'
         . '<p><a href="' . $safeUrl . '">Criar uma nova senha</a></p>'
         . '<p>Este link expira em 1 hora e só pode ser usado uma vez. '
         . 'Se você não solicitou a redefinição, ignore esta mensagem.</p>';
     $mail->AltBody = "Olá, {$recipientName}.\n\n"
-        . "Para criar uma nova senha do Mathematics Education, abra este link:\n{$recoveryUrl}\n\n"
+        . "Para criar uma nova senha do MindPlay, abra este link:\n{$recoveryUrl}\n\n"
         . 'O link expira em 1 hora e só pode ser usado uma vez. Se você não solicitou a redefinição, ignore esta mensagem.';
 
     try {
         $mail->send();
     } catch (PHPMailer\Exception $error) {
-        error_log('Falha ao enviar e-mail de recuperação do Mathematics Education: ' . $mail->ErrorInfo);
+        error_log('Falha ao enviar e-mail de recuperação do MindPlay: ' . $mail->ErrorInfo);
         throw new RuntimeException('Não foi possível enviar o e-mail de recuperação. Verifique a configuração SMTP.', 0, $error);
     }
 }

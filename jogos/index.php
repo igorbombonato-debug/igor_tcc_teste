@@ -27,7 +27,16 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
                 <div class="game-icon purple">🔥</div>
                 <h3>Queimada Matemática</h3>
                 <p>Responda corretamente antes do tempo acabar e acumule pontos e XP.</p>
-                <a href="/igor_tcc_teste/jogos/queimada.php?materia_id=<?php echo $materiaId; ?>" class="btn btn-primary">Jogar agora</a>
+                <form action="/igor_tcc_teste/jogos/queimada.php" method="GET">
+                    <input type="hidden" name="materia_id" value="<?php echo $materiaId; ?>">
+                    <label class="form-label" for="dificuldadeQueimada">Escolha a dificuldade</label>
+                    <select class="form-select mb-3" id="dificuldadeQueimada" name="dificuldade">
+                        <option value="Fácil">Fácil</option>
+                        <option value="Médio" selected>Médio</option>
+                        <option value="Difícil">Difícil</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Jogar agora</button>
+                </form>
             </div>
         </div>
         <div class="col-md-6">
@@ -35,7 +44,16 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
                 <div class="game-icon blue">🧠</div>
                 <h3>Memória Matemática</h3>
                 <p>Combine operações, frações, porcentagens e respostas para completar os pares.</p>
-                <a href="/igor_tcc_teste/jogos/memoria.php?materia_id=<?php echo $materiaId; ?>" class="btn btn-primary">Jogar agora</a>
+                <form action="/igor_tcc_teste/jogos/memoria.php" method="GET">
+                    <input type="hidden" name="materia_id" value="<?php echo $materiaId; ?>">
+                    <label class="form-label" for="dificuldadeMemoria">Escolha a dificuldade</label>
+                    <select class="form-select mb-3" id="dificuldadeMemoria" name="dificuldade">
+                        <option value="Fácil">Fácil</option>
+                        <option value="Médio" selected>Médio</option>
+                        <option value="Difícil">Difícil</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Jogar agora</button>
+                </form>
             </div>
         </div>
     </div>

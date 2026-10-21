@@ -31,7 +31,7 @@ try {
     // Interrompe a página com status HTTP 500 e uma orientação para corrigir a conexão.
     http_response_code(500);
     die(
-        'Não foi possível conectar ao banco de dados Mathematics Education. ' .
+        'Não foi possível conectar ao banco de dados MindPlay. ' .
         'Verifique se o MySQL está rodando, se o banco mathplay foi criado e se a senha em config/database.php está correta. ' .
         'Erro: ' . $e->getMessage()
     );

@@ -11,7 +11,8 @@ $activePage = basename($_SERVER['PHP_SELF']);
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
     <div class="container">
         <a class="navbar-brand" href="<?php echo is_logged_in() ? '/igor_tcc_teste/public/dashboard.php' : '/igor_tcc_teste/public/login.php'; ?>">
-            Mathematics Education
+            <img class="navbar-brand-icon" src="/igor_tcc_teste/assets/img/mindplay-icon.png" alt="">
+            <span>MindPlay</span>
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">

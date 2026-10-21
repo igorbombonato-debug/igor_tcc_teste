@@ -223,4 +223,145 @@ document.addEventListener('DOMContentLoaded', () => {
         fontScale = minimumScale;
         saveFontScale();
     });
+
+    // A leitura em voz alta é acionada pela pessoa e usa a voz pt-BR do navegador.
+    const readPageButton = document.getElementById('readPage');
+    const readSelectionButton = document.getElementById('readSelection');
+    const stopReadingButton = document.getElementById('stopReading');
+    const soundToggle = document.getElementById('soundToggle');
+    const speechSupported = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+    let audioContext = null;
+    let activeUtterance = null;
+
+    const playConfirmationTone = () => {
+        try {
+            if (window.localStorage.getItem('mindplay-accessibility-sounds') !== 'on') return;
+        } catch (error) {
+            console.warn('Não foi possível verificar a preferência de som.', error);
+            return;
+        }
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+            status.textContent = 'Este navegador não oferece suporte aos sons de confirmação.';
+            return;
+        }
+
+        try {
+            audioContext ??= new AudioContextClass();
+        } catch (error) {
+            status.textContent = 'Não foi possível iniciar os sons de confirmação neste navegador.';
+            console.error('Falha ao iniciar o áudio de confirmação.', error);
+            return;
+        }
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().catch(error => {
+                console.warn('Não foi possível ativar o áudio de confirmação.', error);
+            });
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 660;
+        gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.16);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.17);
+    };
+
+    const speakText = text => {
+        const normalizedText = text.replace(/\s+/g, ' ').trim();
+        if (!normalizedText) {
+            status.textContent = 'Não há texto disponível para leitura nesta página.';
+            return;
+        }
+        if (!speechSupported) {
+            status.textContent = 'A leitura em voz alta não é compatível com este navegador.';
+            return;
+        }
+
+        activeUtterance = null;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(normalizedText);
+        utterance.lang = 'pt-BR';
+        const portugueseVoice = window.speechSynthesis.getVoices().find(voice => voice.lang.toLowerCase() === 'pt-br');
+        if (portugueseVoice) utterance.voice = portugueseVoice;
+        activeUtterance = utterance;
+        utterance.onstart = () => {
+            if (activeUtterance !== utterance) return;
+            stopReadingButton.disabled = false;
+            status.textContent = 'Leitura em voz alta iniciada.';
+            playConfirmationTone();
+        };
+        utterance.onend = () => {
+            if (activeUtterance !== utterance) return;
+            activeUtterance = null;
+            stopReadingButton.disabled = true;
+            status.textContent = 'Leitura em voz alta concluída.';
+        };
+        utterance.onerror = event => {
+            if (activeUtterance !== utterance) return;
+            activeUtterance = null;
+            stopReadingButton.disabled = true;
+            status.textContent = 'Não foi possível concluir a leitura em voz alta.';
+            console.error('Falha na leitura em voz alta.', event.error);
+        };
+        window.speechSynthesis.speak(utterance);
+    };
+
+    if (readPageButton && readSelectionButton && stopReadingButton) {
+        if (!speechSupported) {
+            readPageButton.disabled = true;
+            readSelectionButton.disabled = true;
+            status.textContent = 'Seu navegador não oferece suporte à leitura em voz alta.';
+        }
+
+        readPageButton.addEventListener('click', () => {
+            const pageContent = document.querySelector('main.main-content');
+            speakText(pageContent?.innerText ?? '');
+        });
+        readSelectionButton.addEventListener('click', () => {
+            speakText(window.getSelection()?.toString() ?? '');
+        });
+        stopReadingButton.addEventListener('click', () => {
+            activeUtterance = null;
+            if (speechSupported) window.speechSynthesis.cancel();
+            stopReadingButton.disabled = true;
+            status.textContent = 'Leitura em voz alta interrompida.';
+        });
+    }
+
+    if (soundToggle) {
+        const soundIcon = soundToggle.querySelector('i');
+        const soundLabel = soundToggle.querySelector('span');
+        const applySoundPreference = enabled => {
+            soundToggle.setAttribute('aria-pressed', String(enabled));
+            soundIcon.className = `bi ${enabled ? 'bi-volume-up' : 'bi-volume-mute'}`;
+            soundLabel.textContent = `Sons de confirmação ${enabled ? 'ativados' : 'desativados'}`;
+        };
+
+        let soundEnabled = false;
+        try {
+            soundEnabled = window.localStorage.getItem('mindplay-accessibility-sounds') === 'on';
+        } catch (error) {
+            console.warn('Não foi possível carregar a preferência de som.', error);
+        }
+        applySoundPreference(soundEnabled);
+
+        soundToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            applySoundPreference(soundEnabled);
+            try {
+                window.localStorage.setItem('mindplay-accessibility-sounds', soundEnabled ? 'on' : 'off');
+                status.textContent = `Sons de confirmação ${soundEnabled ? 'ativados' : 'desativados'}.`;
+            } catch (error) {
+                status.textContent = `Sons de confirmação ${soundEnabled ? 'ativados' : 'desativados'} nesta página, mas não foi possível salvar a preferência.`;
+                console.warn('Não foi possível salvar a preferência de som.', error);
+            }
+            playConfirmationTone();
+        });
+    }
 });

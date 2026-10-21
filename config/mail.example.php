@@ -10,14 +10,14 @@ return [
             'username' => '',
             'password' => '',
             'from_address' => '',
-            'from_name' => 'Mathematics Education',
+            'from_name' => 'MindPlay',
         ],
         'outlook' => [
             // O segundo bloco permite configurar a mesma aplicação para uma conta Outlook.
             'username' => '',
             'password' => '',
             'from_address' => '',
-            'from_name' => 'Mathematics Education',
+            'from_name' => 'MindPlay',
         ],
     ],
     // URL base usada para montar links da aplicação, como os de recuperação de senha.

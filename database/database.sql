@@ -1,4 +1,4 @@
--- Script de instalação inicial do Mathematics Education: cria as tabelas e carrega matérias e perguntas de exemplo.
+-- Script de instalação inicial do MindPlay: cria as tabelas e carrega matérias e perguntas de exemplo.
 -- Atenção: os DROP TABLE abaixo apagam dados existentes; use este arquivo para uma instalação limpa.
 -- Cria o banco usando UTF-8 para preservar acentos.
 CREATE DATABASE IF NOT EXISTS mathplay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -337,7 +337,7 @@ CREATE TABLE IF NOT EXISTS configuracoes (
 -- Valores iniciais de configuração lidos pela aplicação.
 INSERT INTO configuracoes (chave, valor) VALUES
 ('versao', '1.0'),
-('nome_sistema', 'Mathematics Education');
+('nome_sistema', 'MindPlay');
 
 SET @base_materia_id := 1;
 
@@ -514,4 +514,4 @@ UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.n
 UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Equação do 2º grau' AND m.ano_escolar = 9 AND m.ativo = 1) WHERE q.id IN (102, 103, 104, 137) AND q.ano_escolar = 9;
 UPDATE questoes q SET q.materia_id = (SELECT MIN(m.id) FROM materias m WHERE m.nome = 'Operações básicas' AND m.ano_escolar = 6 AND m.ativo = 1) WHERE q.id BETWEEN 123 AND 128 AND q.ano_escolar = 6;
 
-SELECT 'Banco Mathematics Education inicializado com sucesso.' AS status;
+SELECT 'Banco MindPlay inicializado com sucesso.' AS status;

@@ -9,7 +9,11 @@ $user = get_logged_user();
 $pageTitle = 'Queimada Matemática | Mathematics Education';
 
 $ano = (int) ($user['ano_escolar'] ?? 6);
-$dificuldade = $_GET['dificuldade'] ?? 'Médio';
+$dificuldadesPermitidas = ['Fácil', 'Médio', 'Difícil'];
+$dificuldadeSolicitada = $_GET['dificuldade'] ?? 'Médio';
+$dificuldade = in_array($dificuldadeSolicitada, $dificuldadesPermitidas, true)
+    ? $dificuldadeSolicitada
+    : 'Médio';
 $materias = obter_materias($ano);
 $materiaIds = array_map('intval', array_column($materias, 'id'));
 $materiaSolicitada = (int) ($_GET['materia_id'] ?? 0);
@@ -17,37 +21,18 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
     ? $materiaSolicitada
     : (int) ($materiaIds[0] ?? 0);
 
-// Busca questões da matéria antes de completar as dez rodadas.
+// Seleciona somente questões da dificuldade escolhida e da série do aluno.
 $questoes = obter_questoes_por_ano($ano, $dificuldade, $materiaId ?: null);
-if (empty($questoes)) {
-    // Se a matéria ainda não tiver perguntas, usa qualquer pergunta da mesma série.
-    $questoes = obter_questoes_por_ano($ano);
-}
 
-// Garante dez rodadas, usando questões do mesmo ano se a matéria tiver poucas.
+// Se a matéria tiver poucas questões, completa com outras matérias da mesma série e dificuldade.
 if (count($questoes) < 10) {
-    // Completa o conjunto com perguntas de outras matérias, sem repetir IDs.
     $questoesPorAno = obter_questoes_por_ano($ano, $dificuldade);
-    $idsExistentes = array_column($questoes, 'id');
+    $idsExistentes = array_map('intval', array_column($questoes, 'id'));
     foreach ($questoesPorAno as $questao) {
-        if (!in_array($questao['id'], $idsExistentes, true)) {
+        $questaoId = (int) $questao['id'];
+        if (!in_array($questaoId, $idsExistentes, true)) {
             $questoes[] = $questao;
-            $idsExistentes[] = $questao['id'];
-        }
-        if (count($questoes) >= 10) {
-            break;
-        }
-    }
-}
-
-if (count($questoes) < 10) {
-    // Se ainda faltar quantidade, completa com perguntas de qualquer dificuldade.
-    $questoesPorAno = obter_questoes_por_ano($ano);
-    $idsExistentes = array_column($questoes, 'id');
-    foreach ($questoesPorAno as $questao) {
-        if (!in_array($questao['id'], $idsExistentes, true)) {
-            $questoes[] = $questao;
-            $idsExistentes[] = $questao['id'];
+            $idsExistentes[] = $questaoId;
         }
         if (count($questoes) >= 10) {
             break;
@@ -69,14 +54,23 @@ if ($questaoAtual) {
 }
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=8">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=9">
 <!-- Os nomes são coletados antes de mostrar a área de perguntas da partida. -->
+<?php if (!$questoes): ?>
+<section class="container page-section">
+    <div class="alert alert-warning" role="alert">
+        Não há perguntas de nível <?php echo e($dificuldade); ?> disponíveis para sua série.
+        <a href="/igor_tcc_teste/jogos/index.php?materia_id=<?php echo $materiaId; ?>" class="alert-link">Voltar e escolher outro nível</a>.
+    </div>
+</section>
+<?php else: ?>
 <div class="game-shell">
         <section class="team-setup card-glass" id="teamSetup">
             <div class="setup-copy">
                 <span class="section-badge">Antes de jogar</span>
                 <h1>Monte sua equipe</h1>
                 <p>Digite os nomes dos jogadores. Eles serão divididos entre os dois times.</p>
+                <p class="mt-2 mb-0"><strong>Nível: <?php echo e($dificuldade); ?></strong></p>
             </div>
             <div class="setup-players" id="setupPlayers">
                 <?php foreach (['Jogador 1', 'Jogador 2', 'Jogador 3', 'Jogador 4', 'Jogador 5', 'Jogador 6', 'Jogador 7', 'Jogador 8'] as $indice => $placeholder): ?>
@@ -149,7 +143,7 @@ if ($questaoAtual) {
             <p>Erros: <strong id="finalErros">0</strong></p>
             <p id="salvamentoStatus" class="alert alert-warning hidden" role="status"></p>
             <div class="d-flex gap-3 justify-content-center flex-wrap">
-                <a href="/igor_tcc_teste/jogos/queimada.php" class="btn btn-primary">JOGAR NOVAMENTE</a>
+                <a href="/igor_tcc_teste/jogos/queimada.php?materia_id=<?php echo $materiaId; ?>&amp;dificuldade=<?php echo rawurlencode($dificuldade); ?>" class="btn btn-primary">JOGAR NOVAMENTE</a>
                 <a href="/igor_tcc_teste/public/dashboard.php" class="btn btn-outline-primary">VOLTAR AO MENU</a>
             </div>
             </section>
@@ -251,9 +245,9 @@ if ($questaoAtual) {
         document.getElementById('pontos').textContent = pontos;
         document.getElementById('xp').textContent = xp;
         document.getElementById('vidas').textContent = times[timeDaVez].filter((_, index) => !jogadoresEliminados.has(`${timeDaVez}-${index}`)).length;
-        document.getElementById('questaoAtual').textContent = Math.min(indice + 1, 10);
+        document.getElementById('questaoAtual').textContent = Math.min(indice + 1, questoes.length);
         document.getElementById('tempo').textContent = tempo;
-        document.getElementById('progresso').textContent = Math.round((indice / 10) * 100) + '%';
+        document.getElementById('progresso').textContent = Math.round((indice / questoes.length) * 100) + '%';
     }
 
     // Exibe a próxima pergunta e inicia o cronômetro de um minuto.
@@ -340,7 +334,7 @@ if ($questaoAtual) {
         atualizarHud();
 
         setTimeout(() => {
-            if (indice >= 10 || timeEliminado) {
+            if (indice >= questoes.length || timeEliminado) {
                 finalizarJogo();
             } else {
                 turnLocked = false;
@@ -424,7 +418,7 @@ if ($questaoAtual) {
                     xp_ganho: totalXp,
                     acertos,
                     erros,
-                    total_questoes: 10,
+                    total_questoes: questoes.length,
                     tempo: 0,
                     equipe_nomes: times,
                     ano_escolar: anoEscolar
@@ -485,4 +479,5 @@ if ($questaoAtual) {
     // A área do jogo só aparece depois de os oito nomes formarem os dois times.
     document.querySelector('.game-area').classList.add('d-none');
 </script>
+<?php endif; ?>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

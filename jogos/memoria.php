@@ -2,22 +2,39 @@
 // Tela do jogo individual de memória; os pares e as regras são controlados no JavaScript.
 // Carrega autenticação e funções compartilhadas do sistema.
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/memory_questions.php';
 require_student();
 
 // Define o aluno e a matéria associada à partida individual.
 $user = get_logged_user();
 $pageTitle = 'Memória Matemática | Mathematics Education';
 $ano = (int) ($user['ano_escolar'] ?? 6);
+$dificuldadesPermitidas = ['Fácil', 'Médio', 'Difícil'];
+$dificuldadeSolicitada = $_GET['dificuldade'] ?? 'Médio';
+$dificuldade = in_array($dificuldadeSolicitada, $dificuldadesPermitidas, true)
+    ? $dificuldadeSolicitada
+    : 'Médio';
 $materias = obter_materias($ano);
 $materiaIds = array_map('intval', array_column($materias, 'id'));
 $materiaSolicitada = (int) ($_GET['materia_id'] ?? 0);
 $materiaId = in_array($materiaSolicitada, $materiaIds, true)
     ? $materiaSolicitada
     : (int) ($materiaIds[0] ?? 0);
-$materiaAtual = array_values(array_filter($materias, static fn(array $materia): bool => (int) $materia['id'] === $materiaId))[0] ?? null;
-
-$questoes = obter_questoes_por_ano($ano, null, $materiaId ?: null);
+// Prioriza a matéria escolhida e completa o tabuleiro com o mesmo nível na série.
+$questoes = obter_questoes_por_ano($ano, $dificuldade, $materiaId ?: null);
+if (count($questoes) < 12) {
+    // Completa o tabuleiro com questões da mesma série e dificuldade, sem repetir perguntas.
+    $questoesPorAno = obter_questoes_por_ano($ano, $dificuldade);
+    $idsExistentes = array_map('intval', array_column($questoes, 'id'));
+    foreach ($questoesPorAno as $questao) {
+        if (!in_array((int) $questao['id'], $idsExistentes, true)) {
+            $questoes[] = $questao;
+            $idsExistentes[] = (int) $questao['id'];
+        }
+        if (count($questoes) >= 12) {
+            break;
+        }
+    }
+}
 $questoes = array_slice($questoes, 0, 12);
 
 $cartasBase = [];
@@ -52,15 +69,20 @@ foreach ($questoes as $questao) {
     }
 }
 
-$cartasBase = array_merge(
-    $cartasBase,
-    gerar_questoes_extras_memoria($materiaAtual['nome'] ?? 'Matemática', $ano, $cartasBase, 12)
-);
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=8">
+<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=9">
+<?php if (!$cartasBase): ?>
+<section class="container page-section">
+    <div class="alert alert-warning" role="alert">
+        Não há perguntas de nível <?php echo e($dificuldade); ?> disponíveis para sua série.
+        <a href="/igor_tcc_teste/jogos/index.php?materia_id=<?php echo $materiaId; ?>" class="alert-link">Voltar e escolher outro nível</a>.
+    </div>
+</section>
+<?php else: ?>
 <div class="memory-shell">
     <div class="container">
+        <p class="text-center"><span class="section-badge">Nível: <?php echo e($dificuldade); ?></span></p>
         <div class="memory-header card-glass">
             <div class="hud-item"><span>Pontos</span><strong id="pontosMemory">0</strong></div>
             <div class="hud-item"><span>XP</span><strong id="xpMemory">0</strong></div>
@@ -96,6 +118,7 @@ $cartasBase = array_merge(
     const anoEscolar = <?php echo (int) $user['ano_escolar']; ?>;
     const materiaId = <?php echo $materiaId; ?>;
     const nomeUsuario = <?php echo json_encode($user['nome'], JSON_UNESCAPED_UNICODE); ?>;
+    const dificuldade = <?php echo json_encode($dificuldade, JSON_UNESCAPED_UNICODE); ?>;
     const cartasBase = <?php echo json_encode($cartasBase, JSON_UNESCAPED_UNICODE); ?>;
 
     // Estado do tabuleiro, pontuação e cronômetro de cinco minutos.
@@ -252,7 +275,7 @@ $cartasBase = array_merge(
                 nova_partida: true,
                 jogo: 'memoria',
                 materia_id: materiaId,
-                dificuldade: 'Médio',
+                dificuldade,
                 pontuacao: pontos,
                 xp_ganho: xp,
                 acertos: cartasEncontradas,
@@ -296,4 +319,5 @@ $cartasBase = array_merge(
 
     criarDeck();
 </script>
+<?php endif; ?>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

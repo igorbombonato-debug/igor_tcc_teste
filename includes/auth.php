@@ -16,6 +16,11 @@ function is_logged_in(): bool
 
 function require_login(): void
 {
+    // Evita que o navegador reapresente conteúdo protegido após uma falha ou logout.
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
     // Bloqueia páginas privadas para sessões inválidas ou usuários removidos.
     if (!is_logged_in() || get_logged_user() === null) {
         // Limpa os dados inválidos antes de redirecionar.

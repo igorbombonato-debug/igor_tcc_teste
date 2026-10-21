@@ -2,9 +2,14 @@
 // Autentica alunos e professores e encaminha cada perfil para sua área.
 // Carrega autenticação, sessão e funções de banco.
 require_once __DIR__ . '/../includes/auth.php';
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 
-// Usuários já logados são enviados diretamente ao dashboard.
-redirect_if_logged_in();
+// Só redireciona sessões ativas ao abrir a página; POST precisa validar os dados enviados.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    redirect_if_logged_in();
+}
 
 // Define o título da página e inicia a mensagem de erro.
 $pageTitle = 'Login | Mathematics Education';
@@ -12,6 +17,14 @@ $error = '';
 $perfil = ($_POST['perfil'] ?? $_GET['perfil'] ?? 'aluno') === 'professor' ? 'professor' : 'aluno';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Uma nova tentativa de login não pode reutilizar uma sessão autenticada anteriormente.
+    $_SESSION = [];
+    if (!session_regenerate_id(true)) {
+        http_response_code(500);
+        error_log('Não foi possível renovar o identificador da sessão durante o login.');
+        exit('Não foi possível iniciar uma sessão segura. Tente novamente.');
+    }
+
     // Lê e limpa os dados enviados pelo formulário.
     $login = trim($_POST['login'] ?? '');
     $senha = $_POST['senha'] ?? '';
@@ -58,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     body { background: linear-gradient(135deg, #eef4ff 0%, #f6f0ff 100%); }
     .login-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 30px 16px 140px; }
     .login-card { max-width: 1100px; width: 100%; border: none; border-radius: 28px; overflow: hidden; background: #fff; box-shadow: 0 30px 80px rgba(82, 90, 186, 0.12); }
-    .login-brand { min-height: 650px; justify-content: flex-start !important; overflow: hidden; background: linear-gradient(145deg, #2356e8 0%, #6254e9 58%, #49bcae 100%); color: white; padding: 48px 50px 30px; }
+    .login-brand { min-height: 650px; justify-content: flex-start !important; overflow: hidden; background: linear-gradient(145deg, #071226 0%, #18234b 58%, #3a286c 100%); color: white; padding: 48px 50px 30px; }
     .login-brand-content { position: relative; z-index: 1; }
+    .login-logo { display: block; width: 150px; height: auto; margin-bottom: 24px; border-radius: 14px; }
     .login-brand h1 { max-width: 520px; font-size: 2.7rem; font-weight: 800; }
     .login-brand p { max-width: 480px; font-size: 1.1rem; opacity: 0.96; }
     .login-illustration { display: block; width: min(100%, 470px); height: 300px; flex: 1 1 auto; min-height: 200px; align-self: center; margin: 12px auto 0; object-fit: contain; }
@@ -77,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-card row g-0">
         <div class="col-lg-6 login-brand d-flex flex-column justify-content-center">
             <div class="login-brand-content">
-                <div class="mb-4"><span class="brand-mark">🎓</span> <strong>Mathematics Education</strong></div>
+                <img class="login-logo" src="/igor_tcc_teste/assets/img/mindplay-logo.png" alt="MindPlay">
                 <h1>Aprender matemática pode ser divertido.</h1>
                 <p class="mt-3">Desafios, evolução e conquistas em uma plataforma feita para você aprender brincando.</p>
             </div>
@@ -122,4 +136,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </div>
+<script>
+    // Evita envios repetidos por clique duplo; a validação das credenciais continua no servidor.
+    document.querySelector('.login-form')?.addEventListener('submit', function (event) {
+        if (this.dataset.submitting === 'true') {
+            event.preventDefault();
+            return;
+        }
+
+        this.dataset.submitting = 'true';
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Verificando...';
+        }
+    });
+</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
