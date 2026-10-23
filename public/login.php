@@ -13,7 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Define o título da página e inicia a mensagem de erro.
 $pageTitle = 'Login | Mathematics Education';
-$error = '';
+$errorMessages = [
+    'campos' => 'Informe seu e-mail ou usuário e sua senha.',
+    'credenciais' => 'Credenciais inválidas.',
+    'inativa' => 'Sua conta está inativa. Contate o administrador.',
+];
+$error = $errorMessages[$_GET['erro'] ?? ''] ?? '';
+$errorCode = '';
 $perfil = ($_POST['perfil'] ?? $_GET['perfil'] ?? 'aluno') === 'professor' ? 'professor' : 'aluno';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -31,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($login === '' || $senha === '') {
         // Impede consulta quando algum campo obrigatório está vazio.
-        $error = 'Informe seu e-mail ou usuário e sua senha.';
+        $errorCode = 'campos';
     } else {
         // Decide se a busca será feita por e-mail ou username.
         $user = str_contains($login, '@')
@@ -40,13 +46,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $perfilCorresponde = $user
             && ($perfil === 'professor'
                 ? $user['tipo'] === 'professor'
-                : in_array($user['tipo'], ['aluno', 'admin'], true));
+                : $user['tipo'] === 'aluno');
         // Além da senha, confirma que o tipo de conta corresponde ao perfil escolhido.
         if ($perfilCorresponde && password_verify($senha, $user['senha'])) {
             // A senha é comparada com o hash armazenado no banco.
             if ((int) $user['ativo'] !== 1) {
                 // Contas desativadas não podem iniciar sessão.
-                $error = 'Sua conta está inativa. Contate o administrador.';
+                $errorCode = 'inativa';
             } else {
                 // Salva na sessão os dados necessários para as páginas privadas.
                 $_SESSION['user_id'] = (int) $user['id'];
@@ -61,8 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             // Não revela se o erro foi no usuário ou na senha.
-            $error = 'Credenciais inválidas.';
+            $errorCode = 'credenciais';
         }
+    }
+
+    if ($errorCode !== '') {
+        // Evita reenviar uma tentativa recusada ao atualizar ou voltar no navegador.
+        $query = http_build_query(['erro' => $errorCode, 'perfil' => $perfil]);
+        header('Location: /igor_tcc_teste/public/login.php?' . $query, true, 303);
+        exit;
     }
 }
 ?>

@@ -1,14 +1,9 @@
 <?php
 // Exibe o resumo de progresso e recomenda conteúdos ao aluno autenticado.
 require_once __DIR__ . '/../includes/auth.php';
-require_login();
+require_student();
 
 $user = get_logged_user();
-// Professores usam uma área própria, sem acessar o painel de aluno.
-if ($user['tipo'] === 'professor') {
-    header('Location: /igor_tcc_teste/professor/index.php');
-    exit;
-}
 $pageTitle = 'Dashboard | Mathematics Education';
 
 // Soma os resultados de todas as partidas do usuário para os cartões do painel.

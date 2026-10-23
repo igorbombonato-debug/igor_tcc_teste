@@ -21,8 +21,9 @@ function require_login(): void
     header('Pragma: no-cache');
     header('Expires: 0');
 
-    // Bloqueia páginas privadas para sessões inválidas ou usuários removidos.
-    if (!is_logged_in() || get_logged_user() === null) {
+    // Bloqueia sessões inválidas, contas removidas ou contas desativadas.
+    $user = get_logged_user();
+    if (!$user || (int) $user['ativo'] !== 1) {
         // Limpa os dados inválidos antes de redirecionar.
         $_SESSION = [];
         session_destroy();
@@ -57,12 +58,15 @@ function require_professor(): void
 
 function require_student(): void
 {
-    // Restringe a área de aluno a quem não tem perfil de professor.
+    // Restringe a área de aluno exclusivamente a contas de aluno.
     require_login();
 
     $user = get_logged_user();
-    if ($user && $user['tipo'] === 'professor') {
-        header('Location: /igor_tcc_teste/professor/index.php');
+    if (!$user || $user['tipo'] !== 'aluno') {
+        $destino = $user && $user['tipo'] === 'professor'
+            ? '/igor_tcc_teste/professor/index.php'
+            : '/igor_tcc_teste/admin/index.php';
+        header('Location: ' . $destino);
         exit;
     }
 }
