@@ -67,6 +67,6 @@ $chatConfig = json_encode([
 </section>
 <script id="chatConfig" type="application/json"><?php echo $chatConfig; ?></script>
 <?php
-$extraJs = '<script src="/igor_tcc_teste/assets/js/chat.js?v=2"></script>';
+$extraJs = '<script src="/igor_tcc_teste/assets/js/mensagens.js?v=3"></script>';
 require_once __DIR__ . '/../includes/footer.php';
 ?>

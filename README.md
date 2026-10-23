@@ -31,6 +31,7 @@ Os comentários em português explicam a responsabilidade dos arquivos, os fluxo
 - **Acompanhamento docente:** `professor/index.php` resume o desempenho das turmas e `professor/aluno.php` detalha as partidas e respostas de um aluno.
 - **Administração:** `admin/` contém as páginas de gerenciamento; `database/` define a estrutura inicial e as migrações incrementais.
 - **Recuperação de senha:** `public/recuperar_senha.php` solicita o link, `includes/mailer.php` prepara o envio por SMTP e `public/redefinir_senha.php` valida o token de uso único.
+- **Mensagens:** a página `public/mensagens.php`, a API `api/mensagens.php` e o script `assets/js/mensagens.js` implementam as conversas. Esses nomes evitam a palavra `chat` nas URLs, que pode ser bloqueada pelo firewall da hospedagem InfinityFree.
 - **Apresentação e acessibilidade:** `assets/css/` define os estilos, enquanto `assets/js/app.js` implementa os controles compartilhados da interface.
 - **Configuração local:** `config/` concentra as conexões e exemplos de configuração. Arquivos locais com segredos não devem ser compartilhados ou versionados.
 
