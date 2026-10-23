@@ -47,7 +47,7 @@ $documentTitle = str_replace(
     <?php $headerUser = get_logged_user(); ?>
     <?php if ($headerUser && in_array($headerUser['tipo'], ['aluno', 'professor'], true)): ?>
         <div class="communication-controls" aria-label="Chat e notificações">
-            <a class="chat-launcher" href="/igor_tcc_teste/public/mensagens.php" aria-label="Abrir chat" title="Abrir chat">
+            <a class="chat-launcher" href="/igor_tcc_teste/public/chat.php" aria-label="Abrir chat" title="Abrir chat">
                 <i class="bi bi-chat-dots" aria-hidden="true"></i>
             </a>
             <div class="dropdown dropup chat-notification-dropdown">

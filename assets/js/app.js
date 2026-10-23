@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (notificationCount && notificationList && notificationEmpty) {
         const atualizarNotificacoes = async () => {
             try {
-                const response = await fetch('/igor_tcc_teste/api/mensagens.php?action=notificacoes', {
+                const response = await fetch('/igor_tcc_teste/api/chat.php?action=notificacoes', {
                     cache: 'no-store',
                     credentials: 'same-origin'
                 });
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     row.dataset.chatNotification = 'true';
                     const link = document.createElement('a');
                     link.className = 'dropdown-item chat-notification-item';
-                    link.href = `/igor_tcc_teste/public/mensagens.php?conversa_id=${encodeURIComponent(item.conversa_id)}`;
+                    link.href = `/igor_tcc_teste/public/chat.php?conversa_id=${encodeURIComponent(item.conversa_id)}`;
                     const sender = document.createElement('strong');
                     sender.textContent = item.remetente_nome;
                     const preview = document.createElement('span');

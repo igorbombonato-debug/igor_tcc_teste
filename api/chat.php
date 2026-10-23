@@ -1,5 +1,4 @@
 <?php
-// API das conversas privadas e das mensagens trocadas entre os usuários.
 
 header('Content-Type: application/json; charset=utf-8');
 
