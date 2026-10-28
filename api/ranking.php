@@ -3,7 +3,7 @@
 // Os filtros são recebidos pela URL e o resultado é serializado em JSON.
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 $ano = isset($_GET['ano']) ? (int) $_GET['ano'] : 0;

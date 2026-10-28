@@ -44,19 +44,19 @@ Os comentários descrevem a intenção e as etapas relevantes do código. Quando
 2. Inicie o Apache e o MySQL.
 3. Acesse o phpMyAdmin ou o cliente MySQL e importe o arquivo `database/database.sql`.
 4. Verifique se o banco chama `mathplay`.
-5. Para a conexão local, copie `config/config.local.example.php` para `config/config.local.php`. O exemplo usa `127.0.0.1`, porta `3308`, banco `mathplay`, usuário `root` e senha vazia, conforme o padrão deste projeto no Laragon. Ajuste os valores se seu MySQL local usar outros dados. Essa configuração tem precedência sobre `config/config.php` e é ignorada pelo Git.
+5. Edite as credenciais diretamente no início de `config/config.php`. Para o Laragon deste projeto, os valores padrão são host `127.0.0.1`, porta `3308`, banco `mathplay`, usuário `root` e senha vazia. Se o seu MySQL local usar outros valores, altere-os nesse arquivo.
 6. Na pasta do projeto, instale as dependências executando `composer install`.
 7. Copie `config/mail.example.php` para `config/mail.local.php` e configure os dados SMTP, conforme a seção abaixo.
 8. Abra no navegador:
    - `http://localhost/mathplay/`
 
-Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Para configurar o MySQL, copie `config/config.example.php` para `config/config.php` e preencha os dados fornecidos pelo painel da hospedagem. O arquivo privado é ignorado pelo Git; não publique nem compartilhe sua senha.
+Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Para configurar o MySQL, edite as credenciais diretamente em `config/config.php` com os dados fornecidos pelo painel da hospedagem. Esse arquivo privado é ignorado pelo Git; envie-o ao servidor sem publicar nem compartilhar sua senha.
 
 ### Configuração do banco no InfinityFree
 
 1. No painel do InfinityFree, abra **MySQL Databases** e crie um banco de dados.
-2. Copie os valores exibidos pelo painel para `config/config.php`: hostname MySQL, nome completo do banco (incluindo o prefixo da conta), usuário completo, senha MySQL e porta `3306`.
-3. Envie esse arquivo para a pasta `config/` do site, junto de `database.php`. Não use `localhost`, `127.0.0.1` ou os dados do Laragon: use o hostname e as credenciais exibidos no painel.
+2. Edite as variáveis `$dbHost`, `$dbPort`, `$dbName`, `$dbUser` e `$dbPass` em `config/config.php` com os valores exibidos no painel: hostname MySQL, porta `3306`, nome completo do banco (incluindo o prefixo da conta), usuário completo e senha MySQL.
+3. Envie `config/config.php` para a pasta `config/` do site. Não use `localhost`, `127.0.0.1` ou os dados do Laragon: use o hostname e as credenciais exibidos no painel.
 4. Importe `database/database.sql` pelo phpMyAdmin do InfinityFree. Se o banco já existir e faltar alguma migração, importe também os arquivos necessários de `database/`.
 
 Se a conexão continuar falhando, confirme que o banco foi criado no painel, que nome e usuário incluem os prefixos informados, e consulte o log de erros PHP da hospedagem. A página mostra uma mensagem genérica; detalhes técnicos ficam no log do servidor.
@@ -97,4 +97,4 @@ O painel flutuante, disponível nas páginas públicas, de aluno, professor e ad
 
 O projeto foi desenvolvido para execução local e usa PDO com preparado de statements para se conectar ao banco MySQL.
 
-Se o MySQL estiver acessível em outra porta ou com senha personalizada, ajuste os valores em `config/database.php`.
+Se o MySQL estiver acessível em outra porta ou com senha personalizada, ajuste os valores no início de `config/config.php`.

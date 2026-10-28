@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Carrega a conexão e as funções usadas para registrar resultados.
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 // Converte o corpo JSON enviado pelo jogo em um array PHP.

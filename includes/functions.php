@@ -2,7 +2,7 @@
 
 // Reúne funções reutilizadas pelas páginas, como consultas, cálculos e formatação.
 require_once __DIR__ . '/paths.php';
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
 
 // Escapa texto antes de inseri-lo em HTML, evitando que conteúdo vire código.
 function e(string $value): string

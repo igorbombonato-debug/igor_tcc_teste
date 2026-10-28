@@ -97,7 +97,7 @@ function get_logged_user(): ?array
         return null;
     }
 
-    // Usa a conexão compartilhada criada em config/database.php.
+    // Usa a conexão compartilhada criada em config/config.php.
     global $pdo;
 
     // Busca os dados atuais do usuário pelo ID salvo na sessão.

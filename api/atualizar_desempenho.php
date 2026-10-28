@@ -3,7 +3,7 @@
 // A resposta da API é sempre enviada em JSON codificado em UTF-8.
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 $input = file_get_contents('php://input');
