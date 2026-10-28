@@ -71,46 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.append(visibilityButton);
     });
 
-    const notificationCount = document.getElementById('chatNotificationCount');
-    const notificationList = document.getElementById('chatNotificationList');
-    const notificationEmpty = document.getElementById('chatNotificationEmpty');
-    if (notificationCount && notificationList && notificationEmpty) {
-        const atualizarNotificacoes = async () => {
-            try {
-                const response = await fetch('./api/chat.php?action=notificacoes', {
-                    cache: 'no-store',
-                    credentials: 'same-origin'
-                });
-                if (!response.ok) return;
-                const data = await response.json();
-                notificationCount.textContent = data.total > 99 ? '99+' : String(data.total);
-                notificationCount.hidden = data.total === 0;
-                notificationEmpty.hidden = data.notificacoes.length > 0;
-                notificationList.querySelectorAll('[data-chat-notification]').forEach(item => item.remove());
-
-                data.notificacoes.forEach(item => {
-                    const row = document.createElement('li');
-                    row.dataset.chatNotification = 'true';
-                    const link = document.createElement('a');
-                    link.className = 'dropdown-item chat-notification-item';
-                    link.href = `./public/chat.php?conversa_id=${encodeURIComponent(item.conversa_id)}`;
-                    const sender = document.createElement('strong');
-                    sender.textContent = item.remetente_nome;
-                    const preview = document.createElement('span');
-                    preview.textContent = item.conteudo;
-                    link.append(sender, preview);
-                    row.append(link);
-                    notificationEmpty.after(row);
-                });
-            } catch (error) {
-                console.warn('Não foi possível atualizar as notificações do chat.', error);
-            }
-        };
-
-        atualizarNotificacoes();
-        window.setInterval(atualizarNotificacoes, 10000);
-    }
-
     const themeToggle = document.getElementById('themeToggle');
     const themeStatus = document.getElementById('themeStatus');
     if (themeToggle && themeStatus) {
