@@ -1,6 +1,6 @@
 <?php
 
-// Copie este arquivo para database.local.php e preencha com os dados do painel da hospedagem.
+// Copie este arquivo para config.php e preencha com os dados do painel da hospedagem.
 return [
     'host' => 'INSIRA_O_HOST_MYSQL_DO_PAINEL',
     'port' => 3306,

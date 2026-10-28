@@ -1,10 +1,10 @@
 <?php
 
-// Configuração local privada: copie database.local.example.php e preencha os dados do servidor.
-$localConfigPath = __DIR__ . '/database.local.php';
+// Configuração privada do servidor.
+$localConfigPath = __DIR__ . '/config.php';
 $localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
 if (!is_array($localConfig)) {
-    throw new RuntimeException('A configuração config/database.local.php deve retornar um array.');
+    throw new RuntimeException('A configuração config/config.php deve retornar um array.');
 }
 
 $host = trim((string) ($localConfig['host'] ?? getenv('MATHPLAY_DB_HOST') ?: '127.0.0.1'));

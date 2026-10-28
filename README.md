@@ -49,12 +49,12 @@ Os comentários descrevem a intenção e as etapas relevantes do código. Quando
 7. Abra no navegador:
    - `http://localhost/mathplay/`
 
-Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Para configurar o MySQL, copie `config/database.local.example.php` para `config/database.local.php` e preencha os dados fornecidos pelo painel da hospedagem. O arquivo privado é ignorado pelo Git; não publique nem compartilhe sua senha.
+Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Para configurar o MySQL, copie `config/config.example.php` para `config/config.php` e preencha os dados fornecidos pelo painel da hospedagem. O arquivo privado é ignorado pelo Git; não publique nem compartilhe sua senha.
 
 ### Configuração do banco no InfinityFree
 
 1. No painel do InfinityFree, abra **MySQL Databases** e crie um banco de dados.
-2. Copie os valores exibidos pelo painel para `config/database.local.php`: hostname MySQL, nome completo do banco (incluindo o prefixo da conta), usuário completo, senha MySQL e porta `3306`.
+2. Copie os valores exibidos pelo painel para `config/config.php`: hostname MySQL, nome completo do banco (incluindo o prefixo da conta), usuário completo, senha MySQL e porta `3306`.
 3. Envie esse arquivo para a pasta `config/` do site, junto de `database.php`. Não use `localhost`, `127.0.0.1` ou os dados do Laragon: use o hostname e as credenciais exibidos no painel.
 4. Importe `database/database.sql` pelo phpMyAdmin do InfinityFree. Se o banco já existir e faltar alguma migração, importe também os arquivos necessários de `database/`.
 
