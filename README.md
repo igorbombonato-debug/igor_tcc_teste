@@ -44,9 +44,10 @@ Os comentários descrevem a intenção e as etapas relevantes do código. Quando
 2. Inicie o Apache e o MySQL.
 3. Acesse o phpMyAdmin ou o cliente MySQL e importe o arquivo `database/database.sql`.
 4. Verifique se o banco chama `mathplay`.
-5. Na pasta do projeto, instale as dependências executando `composer install`.
-6. Copie `config/mail.example.php` para `config/mail.local.php` e configure os dados SMTP, conforme a seção abaixo.
-7. Abra no navegador:
+5. Para a conexão local, copie `config/config.local.example.php` para `config/config.local.php`. O exemplo usa `127.0.0.1`, porta `3308`, banco `mathplay`, usuário `root` e senha vazia, conforme o padrão deste projeto no Laragon. Ajuste os valores se seu MySQL local usar outros dados. Essa configuração tem precedência sobre `config/config.php` e é ignorada pelo Git.
+6. Na pasta do projeto, instale as dependências executando `composer install`.
+7. Copie `config/mail.example.php` para `config/mail.local.php` e configure os dados SMTP, conforme a seção abaixo.
+8. Abra no navegador:
    - `http://localhost/mathplay/`
 
 Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Para configurar o MySQL, copie `config/config.example.php` para `config/config.php` e preencha os dados fornecidos pelo painel da hospedagem. O arquivo privado é ignorado pelo Git; não publique nem compartilhe sua senha.

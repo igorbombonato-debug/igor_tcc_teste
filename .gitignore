@@ -1,3 +1,4 @@
 /vendor/
 /config/mail.local.php
 /config/config.php
+/config/config.local.php

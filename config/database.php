@@ -1,17 +1,19 @@
 <?php
 
-// Configuração privada do servidor.
-$localConfigPath = __DIR__ . '/config.php';
-$localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
-if (!is_array($localConfig)) {
-    throw new RuntimeException('A configuração config/config.php deve retornar um array.');
+// A configuração local tem precedência; no servidor, use config.php.
+$localConfigPath = __DIR__ . '/config.local.php';
+$serverConfigPath = __DIR__ . '/config.php';
+$databaseConfigPath = is_file($localConfigPath) ? $localConfigPath : $serverConfigPath;
+$databaseConfig = is_file($databaseConfigPath) ? require $databaseConfigPath : [];
+if (!is_array($databaseConfig)) {
+    throw new RuntimeException('A configuração ' . basename($databaseConfigPath) . ' deve retornar um array.');
 }
 
-$host = trim((string) ($localConfig['host'] ?? getenv('MATHPLAY_DB_HOST') ?: '127.0.0.1'));
-$port = (int) ($localConfig['port'] ?? getenv('MATHPLAY_DB_PORT') ?: 3308);
-$dbname = trim((string) ($localConfig['dbname'] ?? getenv('MATHPLAY_DB_NAME') ?: 'mathplay'));
-$dbUser = trim((string) ($localConfig['username'] ?? getenv('MATHPLAY_DB_USER') ?: 'root'));
-$dbPass = (string) ($localConfig['password'] ?? getenv('MATHPLAY_DB_PASSWORD') ?: '');
+$host = trim((string) ($databaseConfig['host'] ?? getenv('MATHPLAY_DB_HOST') ?: '127.0.0.1'));
+$port = (int) ($databaseConfig['port'] ?? getenv('MATHPLAY_DB_PORT') ?: 3308);
+$dbname = trim((string) ($databaseConfig['dbname'] ?? getenv('MATHPLAY_DB_NAME') ?: 'mathplay'));
+$dbUser = trim((string) ($databaseConfig['username'] ?? getenv('MATHPLAY_DB_USER') ?: 'root'));
+$dbPass = (string) ($databaseConfig['password'] ?? getenv('MATHPLAY_DB_PASSWORD') ?: '');
 
 if ($host === '' || $port < 1 || $dbname === '' || $dbUser === '') {
     throw new RuntimeException('Host, porta, banco e usuário do MySQL devem estar configurados.');
