@@ -63,7 +63,7 @@ $documentTitle = str_replace(
         </div>
         <div class="accessibility-speech-actions" aria-label="Leitura em voz alta">
             <button type="button" id="readPage"><i class="bi bi-volume-up" aria-hidden="true"></i> Ler página</button>
-            <button type="button" id="readSelection"><i class="bi bi-chat-square-text" aria-hidden="true"></i> Ler seleção</button>
+            <!-- <button type="button" id="readSelection"><i class="bi bi-chat-square-text" aria-hidden="true"></i> Ler seleção</button> -->
             <button type="button" id="stopReading" disabled><i class="bi bi-stop-circle" aria-hidden="true"></i> Parar</button>
         </div>
         <button type="button" class="accessibility-sound-toggle" id="soundToggle" aria-pressed="false">
