@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome'])) {
             $nomeArquivo = bin2hex(random_bytes(16)) . '.' . $tiposPermitidos[$tipo];
             $diretorio = __DIR__ . '/../assets/img/avatars/';
             if (move_uploaded_file($arquivo['tmp_name'], $diretorio . $nomeArquivo)) {
-                $avatar = '/igor_tcc_teste/assets/img/avatars/' . $nomeArquivo;
+                $avatar = app_url('/assets/img/avatars/' . $nomeArquivo);
             } else {
                 $profileError = 'Não foi possível salvar a foto de perfil.';
             }

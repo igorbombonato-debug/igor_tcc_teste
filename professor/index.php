@@ -98,7 +98,7 @@ $percentualGeral = calcular_percentual($totalAcertos, $totalAcertos + $totalErro
                                         <span><?php echo (int) $aluno['percentual']; ?>%</span>
                                     </div>
                                 </td>
-                                <td><a class="btn btn-sm btn-outline-primary" href="/igor_tcc_teste/professor/aluno.php?id=<?php echo (int) $aluno['id']; ?>">Ver acompanhamento</a></td>
+                                <td><a class="btn btn-sm btn-outline-primary" href="./professor/aluno.php?id=<?php echo (int) $aluno['id']; ?>">Ver acompanhamento</a></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

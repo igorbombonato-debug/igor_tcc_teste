@@ -32,7 +32,7 @@ function mathplay_mail_configuration(): array
         'password' => (string) (getenv($environmentPrefix . 'PASSWORD') ?: ($providerSettings['password'] ?? '')),
         'from_address' => trim((string) (getenv($environmentPrefix . 'FROM_ADDRESS') ?: ($providerSettings['from_address'] ?? ''))),
         'from_name' => trim((string) (getenv($environmentPrefix . 'FROM_NAME') ?: ($providerSettings['from_name'] ?? 'MindPlay'))),
-        'base_url' => rtrim(trim((string) (getenv('MATHPLAY_BASE_URL') ?: ($localConfig['base_url'] ?? 'http://localhost/igor_tcc_teste'))), '/'),
+        'base_url' => rtrim(trim((string) (getenv('MATHPLAY_BASE_URL') ?: ($localConfig['base_url'] ?? 'http://localhost/mathplay'))), '/'),
     ];
 
     // Interrompe o envio se faltarem credenciais ou endereços válidos.

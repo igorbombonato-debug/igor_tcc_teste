@@ -17,6 +17,7 @@ $documentTitle = str_replace(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="<?php echo e(app_url('/')); ?>">
     <title><?php echo e($documentTitle); ?></title>
     <script>
         // Aplica o tema salvo antes da renderização para evitar uma troca visual tardia.
@@ -35,10 +36,10 @@ $documentTitle = str_replace(
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/png" href="/igor_tcc_teste/assets/img/mindplay-icon.png?v=1">
-    <link rel="apple-touch-icon" href="/igor_tcc_teste/assets/img/mindplay-icon.png?v=1">
+    <link rel="icon" type="image/png" href="./assets/img/mindplay-icon.png?v=1">
+    <link rel="apple-touch-icon" href="./assets/img/mindplay-icon.png?v=1">
     <meta name="theme-color" content="#071226">
-    <link rel="stylesheet" href="/igor_tcc_teste/assets/css/style.css?v=13">
+    <link rel="stylesheet" href="./assets/css/style.css?v=13">
     <?php if (isset($extraCss)) { echo $extraCss; } ?>
 </head>
 <body>
@@ -47,7 +48,7 @@ $documentTitle = str_replace(
     <?php $headerUser = get_logged_user(); ?>
     <?php if ($headerUser && in_array($headerUser['tipo'], ['aluno', 'professor'], true)): ?>
         <div class="communication-controls" aria-label="Chat e notificações">
-            <a class="chat-launcher" href="/igor_tcc_teste/public/chat.php" aria-label="Abrir chat" title="Abrir chat">
+            <a class="chat-launcher" href="./public/chat.php" aria-label="Abrir chat" title="Abrir chat">
                 <i class="bi bi-chat-dots" aria-hidden="true"></i>
             </a>
             <div class="dropdown dropup chat-notification-dropdown">

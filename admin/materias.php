@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         $stmt = $pdo->prepare('DELETE FROM materias WHERE id = :id');
         $stmt->execute(['id' => $id]);
     }
-    header('Location: /admin/materias.php');
+    header('Location: ' . app_url('/admin/materias.php'));
     exit;
 }
 

@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Após criar a conta, direciona para o login em vez de iniciar sessão automaticamente.
         $success = 'Cadastro realizado com sucesso!';
-        header('Location: /igor_tcc_teste/public/login.php?cadastro=1');
+        header('Location: ' . app_url('/public/login.php?cadastro=1'));
         exit;
     }
 }
@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button class="btn btn-primary w-100">Criar conta</button>
                 </div>
                 <div class="col-12 text-center">
-                    <a href="/igor_tcc_teste/public/login.php" class="text-decoration-none">Já tenho conta</a>
+                    <a href="./public/login.php" class="text-decoration-none">Já tenho conta</a>
                 </div>
             </form>
         </div>

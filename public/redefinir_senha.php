@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($erro): ?><div class="alert alert-danger"><?php echo e($erro); ?></div><?php endif; ?>
         <?php if ($sucesso): ?>
             <div class="alert alert-success"><?php echo e($sucesso); ?></div>
-            <a href="/igor_tcc_teste/public/login.php" class="btn btn-primary w-100">Ir para o login</a>
+            <a href="./public/login.php" class="btn btn-primary w-100">Ir para o login</a>
         <?php elseif ($recuperacao): ?>
             <p class="text-muted">Escolha uma nova senha com pelo menos 6 caracteres.</p>
             <form method="POST">
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         <?php else: ?>
             <div class="alert alert-danger">Este link é inválido, já foi usado ou expirou.</div>
-            <a href="/igor_tcc_teste/public/recuperar_senha.php" class="btn btn-primary w-100">Solicitar novo link</a>
+            <a href="./public/recuperar_senha.php" class="btn btn-primary w-100">Solicitar novo link</a>
         <?php endif; ?>
     </section>
 </div>

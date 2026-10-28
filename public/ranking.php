@@ -19,11 +19,11 @@ $rankAno = $anoFiltro ? obter_ranking_por_ano($anoFiltro, 10) : $rankGeral;
             <h1 class="mt-2 mb-0">🏆 Ranking</h1>
         </div>
         <div class="btn-group" role="group">
-            <a href="/igor_tcc_teste/public/ranking.php?ano=0" class="btn btn-sm <?php echo $anoFiltro === 0 ? 'btn-primary' : 'btn-outline-primary'; ?>">Geral</a>
-            <a href="/igor_tcc_teste/public/ranking.php?ano=6" class="btn btn-sm <?php echo $anoFiltro === 6 ? 'btn-primary' : 'btn-outline-primary'; ?>">6º ano</a>
-            <a href="/igor_tcc_teste/public/ranking.php?ano=7" class="btn btn-sm <?php echo $anoFiltro === 7 ? 'btn-primary' : 'btn-outline-primary'; ?>">7º ano</a>
-            <a href="/igor_tcc_teste/public/ranking.php?ano=8" class="btn btn-sm <?php echo $anoFiltro === 8 ? 'btn-primary' : 'btn-outline-primary'; ?>">8º ano</a>
-            <a href="/igor_tcc_teste/public/ranking.php?ano=9" class="btn btn-sm <?php echo $anoFiltro === 9 ? 'btn-primary' : 'btn-outline-primary'; ?>">9º ano</a>
+            <a href="./public/ranking.php?ano=0" class="btn btn-sm <?php echo $anoFiltro === 0 ? 'btn-primary' : 'btn-outline-primary'; ?>">Geral</a>
+            <a href="./public/ranking.php?ano=6" class="btn btn-sm <?php echo $anoFiltro === 6 ? 'btn-primary' : 'btn-outline-primary'; ?>">6º ano</a>
+            <a href="./public/ranking.php?ano=7" class="btn btn-sm <?php echo $anoFiltro === 7 ? 'btn-primary' : 'btn-outline-primary'; ?>">7º ano</a>
+            <a href="./public/ranking.php?ano=8" class="btn btn-sm <?php echo $anoFiltro === 8 ? 'btn-primary' : 'btn-outline-primary'; ?>">8º ano</a>
+            <a href="./public/ranking.php?ano=9" class="btn btn-sm <?php echo $anoFiltro === 9 ? 'btn-primary' : 'btn-outline-primary'; ?>">9º ano</a>
         </div>
     </div>
 

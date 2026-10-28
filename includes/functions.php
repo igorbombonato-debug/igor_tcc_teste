@@ -1,6 +1,7 @@
 <?php
 
 // Reúne funções reutilizadas pelas páginas, como consultas, cálculos e formatação.
+require_once __DIR__ . '/paths.php';
 require_once __DIR__ . '/../config/database.php';
 
 // Escapa texto antes de inseri-lo em HTML, evitando que conteúdo vire código.
@@ -22,7 +23,23 @@ function avatar_url(?string $avatar): ?string
         return $avatar;
     }
 
-    return str_starts_with($avatar, '/igor_tcc_teste/assets/img/avatars/') ? $avatar : null;
+    $avatarPath = parse_url($avatar, PHP_URL_PATH);
+    $avatarPrefix = '/assets/img/avatars/';
+    if (!is_string($avatarPath)) {
+        return null;
+    }
+
+    $markerPosition = strrpos($avatarPath, $avatarPrefix);
+    if ($markerPosition === false) {
+        return null;
+    }
+
+    $fileName = substr($avatarPath, $markerPosition + strlen($avatarPrefix));
+    if ($fileName === '' || basename($fileName) !== $fileName) {
+        return null;
+    }
+
+    return app_url($avatarPrefix . $fileName);
 }
 
 // Calcula o nível considerando uma meta de 500 XP por nível.

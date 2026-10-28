@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input id="email" type="email" name="email" class="form-control" required autocomplete="email">
             <button class="btn btn-primary w-100 mt-3">Enviar link de recuperação</button>
         </form>
-        <a href="/igor_tcc_teste/public/login.php" class="btn btn-link w-100 mt-2">Voltar ao login</a>
+        <a href="./public/login.php" class="btn btn-link w-100 mt-2">Voltar ao login</a>
     </section>
 </div>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -21,5 +21,5 @@ return [
         ],
     ],
     // URL base usada para montar links da aplicação, como os de recuperação de senha.
-    'base_url' => 'http://localhost/igor_tcc_teste',
+    'base_url' => 'http://localhost/mathplay',
 ];

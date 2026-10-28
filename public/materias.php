@@ -16,7 +16,7 @@ $materias = obter_materias($ano);
             <span class="section-badge">Conteúdos</span>
             <h1 class="mt-2 mb-0">Matérias do <?php echo $ano; ?>º ano</h1>
         </div>
-        <a href="/igor_tcc_teste/jogos/index.php" class="btn btn-primary">🎮 Jogar</a>
+        <a href="./jogos/index.php" class="btn btn-primary">🎮 Jogar</a>
     </div>
 
     <div class="row g-4">
@@ -42,7 +42,7 @@ $materias = obter_materias($ano);
                                 <a href="https://www.youtube.com/results?search_query=<?php echo rawurlencode($buscaVideo); ?>" class="btn btn-sm btn-outline-danger" target="_blank" rel="noopener noreferrer">
                                     <i class="bi bi-youtube"></i> Videoaula
                                 </a>
-                                <a href="/igor_tcc_teste/jogos/index.php?materia_id=<?php echo (int) $materia['id']; ?>" class="btn btn-sm btn-primary">
+                                <a href="./jogos/index.php?materia_id=<?php echo (int) $materia['id']; ?>" class="btn btn-sm btn-primary">
                                     <i class="bi bi-controller"></i> Jogar
                                 </a>
                             </div>

@@ -27,7 +27,7 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
                 <div class="game-icon purple">🔥</div>
                 <h3>Queimada Matemática</h3>
                 <p>Responda corretamente antes do tempo acabar e acumule pontos e XP.</p>
-                <form action="/igor_tcc_teste/jogos/queimada.php" method="GET">
+                <form action="./jogos/queimada.php" method="GET">
                     <input type="hidden" name="materia_id" value="<?php echo $materiaId; ?>">
                     <label class="form-label" for="dificuldadeQueimada">Escolha a dificuldade</label>
                     <select class="form-select mb-3" id="dificuldadeQueimada" name="dificuldade">
@@ -44,7 +44,7 @@ $materiaId = in_array($materiaSolicitada, $materiaIds, true)
                 <div class="game-icon blue">🧠</div>
                 <h3>Memória Matemática</h3>
                 <p>Combine operações, frações, porcentagens e respostas para completar os pares.</p>
-                <form action="/igor_tcc_teste/jogos/memoria.php" method="GET">
+                <form action="./jogos/memoria.php" method="GET">
                     <input type="hidden" name="materia_id" value="<?php echo $materiaId; ?>">
                     <label class="form-label" for="dificuldadeMemoria">Escolha a dificuldade</label>
                     <select class="form-select mb-3" id="dificuldadeMemoria" name="dificuldade">

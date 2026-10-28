@@ -60,8 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_nome'] = $user['nome'];
                 // Envia o usuário autenticado para o dashboard.
                 $destino = $user['tipo'] === 'professor'
-                    ? '/igor_tcc_teste/professor/index.php'
-                    : '/igor_tcc_teste/public/dashboard.php';
+                    ? app_url('/professor/index.php')
+                    : app_url('/public/dashboard.php');
                 header('Location: ' . $destino);
                 exit;
             }
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($errorCode !== '') {
         // Evita reenviar uma tentativa recusada ao atualizar ou voltar no navegador.
         $query = http_build_query(['erro' => $errorCode, 'perfil' => $perfil]);
-        header('Location: /igor_tcc_teste/public/login.php?' . $query, true, 303);
+        header('Location: ' . app_url('/public/login.php') . '?' . $query, true, 303);
         exit;
     }
 }
@@ -104,11 +104,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-card row g-0">
         <div class="col-lg-6 login-brand d-flex flex-column justify-content-center">
             <div class="login-brand-content">
-                <img class="login-logo" src="/igor_tcc_teste/assets/img/mindplay-logo.png" alt="MindPlay">
+                <img class="login-logo" src="./assets/img/mindplay-logo.png" alt="MindPlay">
                 <h1>Aprender matemática pode ser divertido.</h1>
                 <p class="mt-3">Desafios, evolução e conquistas em uma plataforma feita para você aprender brincando.</p>
             </div>
-            <img class="login-illustration" src="/igor_tcc_teste/assets/img/classroom-math.svg" alt="Uma professora e um estudante resolvem atividades de matemática diante de um quadro.">
+            <img class="login-illustration" src="./assets/img/classroom-math.svg" alt="Uma professora e um estudante resolvem atividades de matemática diante de um quadro.">
         </div>
 
         <div class="col-lg-6 form-panel">
@@ -140,10 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="btn btn-primary w-100">ENTRAR</button>
                 <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
                     <div class="d-flex flex-wrap gap-3">
-                        <a href="/igor_tcc_teste/public/cadastro.php" class="text-decoration-none">Cadastro de aluno</a>
-                        <a href="/igor_tcc_teste/public/cadastro_professor.php" class="text-decoration-none">Cadastro de professor</a>
+                        <a href="./public/cadastro.php" class="text-decoration-none">Cadastro de aluno</a>
+                        <a href="./public/cadastro_professor.php" class="text-decoration-none">Cadastro de professor</a>
                     </div>
-                    <a href="/igor_tcc_teste/public/recuperar_senha.php" class="text-decoration-none">Esqueci minha senha</a>
+                    <a href="./public/recuperar_senha.php" class="text-decoration-none">Esqueci minha senha</a>
                 </div>
             </form>
         </div>

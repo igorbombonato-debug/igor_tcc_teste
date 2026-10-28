@@ -37,7 +37,7 @@ $xpMeta = max($nivelAtual * 500, 500);
                 <span class="section-badge">Bem-vindo</span>
                 <h1 class="mt-3 mb-0">Olá, <?php echo e($user['nome']); ?>!</h1>
             </div>
-            <a href="/igor_tcc_teste/jogos/index.php" class="btn btn-primary btn-lg">🎮 Jogar agora</a>
+            <a href="./jogos/index.php" class="btn btn-primary btn-lg">🎮 Jogar agora</a>
         </div>
     </div>
 </section>
@@ -105,7 +105,7 @@ $xpMeta = max($nivelAtual * 500, 500);
                         </div>
                         <div class="text-end">
                             <div class="mini-badge">Você pode melhorar!</div>
-                            <a href="/igor_tcc_teste/public/materias.php?materia=<?php echo rawurlencode($item['nome']); ?>" class="btn btn-outline-primary mt-2">ESTUDAR AGORA</a>
+                            <a href="./public/materias.php?materia=<?php echo rawurlencode($item['nome']); ?>" class="btn btn-outline-primary mt-2">ESTUDAR AGORA</a>
                         </div>
                     </div>
                 <?php endforeach; ?>

@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!configElement) return;
 
     const config = JSON.parse(configElement.textContent);
-    const apiUrl = '/igor_tcc_teste/api/chat.php';
+    const apiUrl = './api/chat.php';
     const conversationList = document.getElementById('chatConversationList');
     const searchInput = document.getElementById('chatContactSearch');
     const searchResults = document.getElementById('chatContactResults');

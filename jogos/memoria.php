@@ -71,12 +71,12 @@ foreach ($questoes as $questao) {
 
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=9">
+<link rel="stylesheet" href="./assets/css/jogos.css?v=9">
 <?php if (!$cartasBase): ?>
 <section class="container page-section">
     <div class="alert alert-warning" role="alert">
         Não há perguntas de nível <?php echo e($dificuldade); ?> disponíveis para sua série.
-        <a href="/igor_tcc_teste/jogos/index.php?materia_id=<?php echo $materiaId; ?>" class="alert-link">Voltar e escolher outro nível</a>.
+        <a href="./jogos/index.php?materia_id=<?php echo $materiaId; ?>" class="alert-link">Voltar e escolher outro nível</a>.
     </div>
 </section>
 <?php else: ?>
@@ -90,7 +90,7 @@ foreach ($questoes as $questao) {
             <div class="hud-item"><span>Cronômetro</span><strong id="tempoMemory">300</strong>s</div>
             <div class="hud-item"><span>Cartas</span><strong id="cartasEncontradas">0</strong></div>
             <div class="hud-item"><span>Total</span><strong id="totalPares">0</strong></div>
-            <a href="/igor_tcc_teste/jogos/index.php" class="btn btn-outline-primary memory-exit-button">
+            <a href="./jogos/index.php" class="btn btn-outline-primary memory-exit-button">
                 <i class="bi bi-box-arrow-left"></i> Sair do jogo
             </a>
         </div>
@@ -108,7 +108,7 @@ foreach ($questoes as $questao) {
         <div class="memory-result-stats" id="memoryResultStats"></div>
         <div class="memory-result-actions">
             <button type="button" class="btn btn-primary" id="memoryResultButton"><i class="bi bi-arrow-clockwise"></i> Jogar novamente</button>
-            <a href="/igor_tcc_teste/jogos/index.php" class="btn btn-outline-primary"><i class="bi bi-house"></i> Voltar ao menu</a>
+            <a href="./jogos/index.php" class="btn btn-outline-primary"><i class="bi bi-house"></i> Voltar ao menu</a>
         </div>
     </section>
 </div>
@@ -267,7 +267,7 @@ foreach ($questoes as $questao) {
         partidaFinalizada = true;
         clearInterval(timer);
         // A tela de resultado aparece imediatamente; o envio ao servidor termina em paralelo.
-        const registro = fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+        const registro = fetch('./api/registrar_resposta.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

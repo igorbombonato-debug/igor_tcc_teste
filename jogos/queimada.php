@@ -54,13 +54,13 @@ if ($questaoAtual) {
 }
 ?>
 <?php require_once __DIR__ . '/../includes/header.php'; ?>
-<link rel="stylesheet" href="/igor_tcc_teste/assets/css/jogos.css?v=9">
+<link rel="stylesheet" href="./assets/css/jogos.css?v=9">
 <!-- Os nomes são coletados antes de mostrar a área de perguntas da partida. -->
 <?php if (!$questoes): ?>
 <section class="container page-section">
     <div class="alert alert-warning" role="alert">
         Não há perguntas de nível <?php echo e($dificuldade); ?> disponíveis para sua série.
-        <a href="/igor_tcc_teste/jogos/index.php?materia_id=<?php echo $materiaId; ?>" class="alert-link">Voltar e escolher outro nível</a>.
+        <a href="./jogos/index.php?materia_id=<?php echo $materiaId; ?>" class="alert-link">Voltar e escolher outro nível</a>.
     </div>
 </section>
 <?php else: ?>
@@ -143,8 +143,8 @@ if ($questaoAtual) {
             <p>Erros: <strong id="finalErros">0</strong></p>
             <p id="salvamentoStatus" class="alert alert-warning hidden" role="status"></p>
             <div class="d-flex gap-3 justify-content-center flex-wrap">
-                <a href="/igor_tcc_teste/jogos/queimada.php?materia_id=<?php echo $materiaId; ?>&amp;dificuldade=<?php echo rawurlencode($dificuldade); ?>" class="btn btn-primary">JOGAR NOVAMENTE</a>
-                <a href="/igor_tcc_teste/public/dashboard.php" class="btn btn-outline-primary">VOLTAR AO MENU</a>
+                <a href="./jogos/queimada.php?materia_id=<?php echo $materiaId; ?>&amp;dificuldade=<?php echo rawurlencode($dificuldade); ?>" class="btn btn-primary">JOGAR NOVAMENTE</a>
+                <a href="./public/dashboard.php" class="btn btn-outline-primary">VOLTAR AO MENU</a>
             </div>
             </section>
         </div>
@@ -342,7 +342,7 @@ if ($questaoAtual) {
             }
         }, 700);
 
-        const registro = fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+        const registro = fetch('./api/registrar_resposta.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -406,7 +406,7 @@ if ($questaoAtual) {
 
         // Aguarda todos os envios de respostas antes de salvar o resumo final da partida.
         Promise.allSettled(registrosPendentes)
-            .then(() => fetch('/igor_tcc_teste/api/registrar_resposta.php', {
+            .then(() => fetch('./api/registrar_resposta.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

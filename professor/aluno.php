@@ -81,7 +81,7 @@ $rotulosJogos = ['queimada' => 'Queimada Matemática', 'memoria' => 'Memória Ma
 <section class="container page-section">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
-            <a href="/igor_tcc_teste/professor/index.php" class="text-decoration-none">← Voltar aos alunos</a>
+            <a href="./professor/index.php" class="text-decoration-none">← Voltar aos alunos</a>
             <h1 class="mt-2 mb-1"><?php echo e($aluno['nome']); ?></h1>
             <p class="text-muted mb-0"><?php echo e($aluno['email']); ?> · <?php echo (int) $aluno['ano_escolar']; ?>º ano</p>
         </div>

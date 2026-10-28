@@ -27,7 +27,7 @@ function require_login(): void
         // Limpa os dados inválidos antes de redirecionar.
         $_SESSION = [];
         session_destroy();
-        header('Location: /igor_tcc_teste/public/login.php');
+        header('Location: ' . app_url('/public/login.php'));
         exit;
     }
 }
@@ -39,7 +39,7 @@ function require_admin(): void
 
     // Depois verifica se o usuário tem permissão administrativa.
     if (empty($_SESSION['user_tipo']) || $_SESSION['user_tipo'] !== 'admin') {
-        header('Location: /igor_tcc_teste/public/dashboard.php');
+        header('Location: ' . app_url('/public/dashboard.php'));
         exit;
     }
 }
@@ -51,7 +51,7 @@ function require_professor(): void
 
     $user = get_logged_user();
     if (!$user || $user['tipo'] !== 'professor') {
-        header('Location: /igor_tcc_teste/public/dashboard.php');
+        header('Location: ' . app_url('/public/dashboard.php'));
         exit;
     }
 }
@@ -64,8 +64,8 @@ function require_student(): void
     $user = get_logged_user();
     if (!$user || $user['tipo'] !== 'aluno') {
         $destino = $user && $user['tipo'] === 'professor'
-            ? '/igor_tcc_teste/professor/index.php'
-            : '/igor_tcc_teste/admin/index.php';
+            ? app_url('/professor/index.php')
+            : app_url('/admin/index.php');
         header('Location: ' . $destino);
         exit;
     }
@@ -77,8 +77,8 @@ function redirect_if_logged_in(): void
     $user = is_logged_in() ? get_logged_user() : null;
     if ($user !== null) {
         $destino = $user['tipo'] === 'professor'
-            ? '/igor_tcc_teste/professor/index.php'
-            : '/igor_tcc_teste/public/dashboard.php';
+            ? app_url('/professor/index.php')
+            : app_url('/public/dashboard.php');
         header('Location: ' . $destino);
         exit;
     }

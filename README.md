@@ -47,7 +47,9 @@ Os comentários descrevem a intenção e as etapas relevantes do código. Quando
 5. Na pasta do projeto, instale as dependências executando `composer install`.
 6. Copie `config/mail.example.php` para `config/mail.local.php` e configure os dados SMTP, conforme a seção abaixo.
 7. Abra no navegador:
-   - `http://localhost/mathplay/public/login.php`
+   - `http://localhost/mathplay/`
+
+Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Configure também as credenciais do MySQL do servidor em `config/database.php`.
 
 Em instalações que já possuem o banco criado, importe uma vez `database/migration_professores.sql` antes de usar o cadastro de professores e o registro detalhado das tentativas da Memória. Importe também `database/migration_recuperacao_senhas.sql` para ativar a redefinição de senha.
 
@@ -57,7 +59,7 @@ O envio usa PHPMailer por SMTP e aceita Gmail ou Outlook. Copie `config/mail.exa
 
 - Gmail usa `smtp.gmail.com`, porta 587 com TLS; Outlook usa `smtp-mail.outlook.com`, porta 587 com TLS.
 - Configure `username`, `password` e `from_address` em cada conta que será usada.
-- Ajuste `base_url` para o endereço público da aplicação, sem a barra final (por exemplo, `http://localhost/igor_tcc_teste`).
+- Ajuste `base_url` para o endereço público da aplicação, sem a barra final (por exemplo, `http://localhost/mathplay`).
 
 O arquivo `config/mail.local.php` é ignorado pelo Git para não publicar credenciais. Para Gmail, use uma senha de app, não a senha normal da conta. Sem uma configuração SMTP válida, a tela de recuperação informa que o envio não está disponível e não cria um link exposto na página.
 

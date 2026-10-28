@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         // O professor entra pela tela de login específica para esse perfil.
-        header('Location: /igor_tcc_teste/public/login.php?perfil=professor&cadastro=1');
+        header('Location: ' . app_url('/public/login.php?perfil=professor&cadastro=1'));
         exit;
     }
 }
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="btn btn-primary w-100">Criar conta de professor</button>
             </div>
             <div class="col-12 text-center">
-                <a href="/igor_tcc_teste/public/login.php?perfil=professor">Já tenho conta</a>
+                <a href="./public/login.php?perfil=professor">Já tenho conta</a>
             </div>
         </form>
     </div>

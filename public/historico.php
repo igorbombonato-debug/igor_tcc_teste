@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['excluir_partida'])) {
         $delete = $pdo->prepare('DELETE FROM partidas WHERE id = :id AND usuario_id = :usuario_id');
         $delete->execute(['id' => $partidaId, 'usuario_id' => $user['id']]);
     }
-    header('Location: /igor_tcc_teste/public/historico.php');
+    header('Location: ' . app_url('/public/historico.php'));
     exit;
 }
 

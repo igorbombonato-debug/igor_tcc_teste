@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_id'])) {
     $id = (int) $_POST['toggle_id'];
     $stmt = $pdo->prepare('UPDATE usuarios SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = :id');
     $stmt->execute(['id' => $id]);
-    header('Location: /admin/usuarios.php');
+    header('Location: ' . app_url('/admin/usuarios.php'));
     exit;
 }
 ?>

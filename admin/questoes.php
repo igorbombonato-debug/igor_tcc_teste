@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                 'exp' => $exp,
             ]);
         }
-        header('Location: /admin/questoes.php');
+        header('Location: ' . app_url('/admin/questoes.php'));
         exit;
     }
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         $id = (int) ($_POST['id'] ?? 0);
         $stmt = $pdo->prepare('UPDATE questoes SET ativo = CASE WHEN ativo = 1 THEN 0 ELSE 1 END WHERE id = :id');
         $stmt->execute(['id' => $id]);
-        header('Location: /admin/questoes.php');
+        header('Location: ' . app_url('/admin/questoes.php'));
         exit;
     }
 
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         $id = (int) ($_POST['id'] ?? 0);
         $stmt = $pdo->prepare('DELETE FROM questoes WHERE id = :id');
         $stmt->execute(['id' => $id]);
-        header('Location: /admin/questoes.php');
+        header('Location: ' . app_url('/admin/questoes.php'));
         exit;
     }
 }
