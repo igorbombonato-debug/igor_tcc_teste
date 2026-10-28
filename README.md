@@ -49,7 +49,16 @@ Os comentários descrevem a intenção e as etapas relevantes do código. Quando
 7. Abra no navegador:
    - `http://localhost/mathplay/`
 
-Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Configure também as credenciais do MySQL do servidor em `config/database.php`.
+Em um servidor hospedado, configure o diretório do site para apontar à pasta do projeto, onde está o `index.php`. Os links e redirecionamentos usam automaticamente o caminho em que o projeto foi publicado, seja na raiz do domínio ou em uma subpasta. Para configurar o MySQL, copie `config/database.local.example.php` para `config/database.local.php` e preencha os dados fornecidos pelo painel da hospedagem. O arquivo privado é ignorado pelo Git; não publique nem compartilhe sua senha.
+
+### Configuração do banco no InfinityFree
+
+1. No painel do InfinityFree, abra **MySQL Databases** e crie um banco de dados.
+2. Copie os valores exibidos pelo painel para `config/database.local.php`: hostname MySQL, nome completo do banco (incluindo o prefixo da conta), usuário completo, senha MySQL e porta `3306`.
+3. Envie esse arquivo para a pasta `config/` do site, junto de `database.php`. Não use `localhost`, `127.0.0.1` ou os dados do Laragon: use o hostname e as credenciais exibidos no painel.
+4. Importe `database/database.sql` pelo phpMyAdmin do InfinityFree. Se o banco já existir e faltar alguma migração, importe também os arquivos necessários de `database/`.
+
+Se a conexão continuar falhando, confirme que o banco foi criado no painel, que nome e usuário incluem os prefixos informados, e consulte o log de erros PHP da hospedagem. A página mostra uma mensagem genérica; detalhes técnicos ficam no log do servidor.
 
 Em instalações que já possuem o banco criado, importe uma vez `database/migration_professores.sql` antes de usar o cadastro de professores e o registro detalhado das tentativas da Memória. Importe também `database/migration_recuperacao_senhas.sql` para ativar a redefinição de senha.
 

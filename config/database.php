@@ -1,16 +1,21 @@
 <?php
 
-// Configura e abre a conexão compartilhada com o banco de dados MySQL da aplicação.
-// Endereço local usado pelo MySQL.
-$host = '127.0.0.1';
-// Porta configurada para o MySQL do Laragon.
-$port = 3308;
-// Nome do banco de dados da aplicação.
-$dbname = 'mathplay';
-// Usuário local do MySQL.
-$dbUser = 'root';
-// Informe aqui a senha configurada para o usuário local do MySQL.
-$dbPass = '';
+// Configuração local privada: copie database.local.example.php e preencha os dados do servidor.
+$localConfigPath = __DIR__ . '/database.local.php';
+$localConfig = is_file($localConfigPath) ? require $localConfigPath : [];
+if (!is_array($localConfig)) {
+    throw new RuntimeException('A configuração config/database.local.php deve retornar um array.');
+}
+
+$host = trim((string) ($localConfig['host'] ?? getenv('MATHPLAY_DB_HOST') ?: '127.0.0.1'));
+$port = (int) ($localConfig['port'] ?? getenv('MATHPLAY_DB_PORT') ?: 3308);
+$dbname = trim((string) ($localConfig['dbname'] ?? getenv('MATHPLAY_DB_NAME') ?: 'mathplay'));
+$dbUser = trim((string) ($localConfig['username'] ?? getenv('MATHPLAY_DB_USER') ?: 'root'));
+$dbPass = (string) ($localConfig['password'] ?? getenv('MATHPLAY_DB_PASSWORD') ?: '');
+
+if ($host === '' || $port < 1 || $dbname === '' || $dbUser === '') {
+    throw new RuntimeException('Host, porta, banco e usuário do MySQL devem estar configurados.');
+}
 
 // PDO lança exceções em falhas, retorna colunas por nome e usa prepared statements nativos.
 // Opções que deixam o PDO seguro e retornam resultados como arrays associativos.
@@ -28,11 +33,7 @@ try {
         $options
     );
 } catch (PDOException $e) {
-    // Interrompe a página com status HTTP 500 e uma orientação para corrigir a conexão.
+    error_log('Falha na conexão MySQL do MindPlay: ' . $e->getMessage());
     http_response_code(500);
-    die(
-        'Não foi possível conectar ao banco de dados MindPlay. ' .
-        'Verifique se o MySQL está rodando, se o banco mathplay foi criado e se a senha em config/database.php está correta. ' .
-        'Erro: ' . $e->getMessage()
-    );
+    die('Não foi possível conectar ao banco de dados MindPlay. Confira as credenciais MySQL configuradas no servidor.');
 }
