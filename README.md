@@ -59,8 +59,6 @@ Em um servidor hospedado, configure o diretório do site para apontar à pasta d
 3. Envie `config/config.php` para a pasta `config/` do site. Não use `localhost`, `127.0.0.1` ou os dados do Laragon: use o hostname e as credenciais exibidos no painel.
 4. Importe `database/database.sql` pelo phpMyAdmin do InfinityFree. Se o banco já existir e faltar alguma migração, importe também os arquivos necessários de `database/`.
 
-O chat foi removido do site porque o InfinityFree bloqueia URLs com `chat` e não permite hospedar scripts de chat em tempo real. Se o banco já tinha sido instalado, as tabelas antigas `conversas` e `mensagens` podem permanecer sem uso; não é necessário apagá-las.
-
 Se a conexão continuar falhando, confirme que o banco foi criado no painel, que nome e usuário incluem os prefixos informados, e consulte o log de erros PHP da hospedagem. A página mostra uma mensagem genérica; detalhes técnicos ficam no log do servidor.
 
 Em instalações que já possuem o banco criado, importe uma vez `database/migration_professores.sql` antes de usar o cadastro de professores e o registro detalhado das tentativas da Memória. Importe também `database/migration_recuperacao_senhas.sql` para ativar a redefinição de senha.
