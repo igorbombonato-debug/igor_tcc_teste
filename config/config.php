@@ -1,10 +1,10 @@
 <?php
 
-$dbHost = '__DB_HOST__';
+$dbHost = 'sql110.infinityfree.com';
 $dbPort = 3306;
-$dbName = '__DB_NAME__';
-$dbUser = '__DB_USER__';
-$dbPass = '__DB_PASS__';
+$dbName = 'if0_43255516_mathplay';
+$dbUser = 'if0_43255516';
+$dbPass = 'Senai507';
 
 $dbOptions = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
