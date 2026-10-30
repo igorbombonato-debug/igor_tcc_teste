@@ -1,7 +1,7 @@
 <?php
 
 $dbHost = '__DB_HOST__';
-$dbPort = 3308;
+$dbPort = 3306;
 $dbName = '__DB_NAME__';
 $dbUser = '__DB_USER__';
 $dbPass = '__DB_PASS__';
